@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator, Alert, ScrollView, Platform } from 'react-native';
+import { useRouter } from 'expo-router'; // Importar useRouter
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Button, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import MaskInput from 'react-native-mask-input';
 import { useAuth } from '../../hooks/useAuth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 
 function UserProfileScreen() {
   const { user } = useAuth();
+  const router = useRouter(); // Inicializar useRouter
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [cep, setCep] = useState('');
@@ -14,6 +16,7 @@ function UserProfileScreen() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [country, setCountry] = useState('');
+  const [isProfessional, setIsProfessional] = useState(false); // Estado para verificar se é profissional
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -21,12 +24,14 @@ function UserProfileScreen() {
     if (!user) return;
 
     const loadUserData = async () => {
+      setLoading(true);
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         const data = userDoc.data();
         if (data) {
           setName(data.name || '');
           setPhone(data.phone || '');
+          setIsProfessional(data.professionalProfile || false); // Carregar status de profissional
 
           const address = data.address || {};
           setCep(address.cep || '');
@@ -36,6 +41,7 @@ function UserProfileScreen() {
           setCountry(address.country || '');
         }
       } catch (error) {
+        console.error("Erro ao carregar dados do usuário:", error);
         Alert.alert('Erro', 'Erro ao carregar os dados do usuário.');
       } finally {
         setLoading(false);
@@ -95,13 +101,19 @@ function UserProfileScreen() {
         name,
         phone,
         address,
+        // Não atualizamos professionalProfile aqui, isso é feito no cadastro/remoção do perfil profissional
       });
       Alert.alert('Sucesso', 'Dados atualizados com sucesso.');
     } catch (error) {
+      console.error("Erro ao salvar alterações:", error);
       Alert.alert('Erro', 'Não foi possível salvar as alterações.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const navigateToEditProfessionalProfile = () => {
+    router.push('/edit-professional-profile'); // Navega para a tela de edição
   };
 
   if (loading) {
@@ -115,7 +127,7 @@ function UserProfileScreen() {
 
 return (
   <ScrollView contentContainerStyle={styles.container}>
-    <Text style={styles.title}>Meu Perfil</Text>
+    <Text style={styles.title}>Meu Perfil Pessoal</Text>
 
     <TextInput
       style={styles.input}
@@ -132,6 +144,8 @@ return (
       mask={['(', /\d/, /\d/, ')', ' ', /\d/, /\d/, /\d/, /\d/, /\d/, '-', /\d/, /\d/, /\d/, /\d/]}
       keyboardType="phone-pad"
     />
+
+    <Text style={styles.sectionTitle}>Endereço</Text>
 
     <MaskInput
       style={styles.input}
@@ -170,11 +184,25 @@ return (
       onChangeText={setCountry}
     />
 
-    <Button
-      title={saving ? 'Salvando...' : 'Salvar Alterações'}
-      onPress={handleSave}
-      disabled={saving}
-    />
+    <View style={styles.buttonContainer}>
+        <Button
+          title={saving ? 'Salvando...' : 'Salvar Alterações Pessoais'}
+          onPress={handleSave}
+          disabled={saving}
+        />
+    </View>
+
+    {/* Botão condicional para editar perfil profissional */}
+    {isProfessional && (
+        <View style={styles.buttonContainer}>
+            <Button
+                title="Editar Perfil Profissional"
+                onPress={navigateToEditProfessionalProfile}
+                color="#007AFF" // Cor diferente para destacar
+            />
+        </View>
+    )}
+
   </ScrollView>
 );
 
@@ -183,7 +211,7 @@ return (
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 40, // Mais espaço no final
   },
   title: {
     fontSize: 22,
@@ -191,19 +219,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 15,
+    marginBottom: 10,
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
-    padding: Platform.OS === 'ios' ? 12 : 8,
+    padding: Platform.OS === 'ios' ? 12 : 10, // Ajuste padding
     marginBottom: 12,
+    backgroundColor: '#fff',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  buttonContainer: {
+      marginTop: 15, // Espaçamento entre botões
+  }
 });
 
 
 export default UserProfileScreen;
+

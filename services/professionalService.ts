@@ -1,12 +1,13 @@
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment, collection, addDoc, getDocs, deleteDoc, query, where  } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, increment, query, updateDoc, where } from "firebase/firestore";
 import { db } from "./firebase";
 
 interface Professional {
   userId: string;
   name: string;
-  category: string;
-  specialty: string;
+  category: string; // Mantido por enquanto, categorias planejadas para v1.1
+  specialties: string[]; // Alterado de specialty: string
   city: string;
+  observations?: string; // Adicionado campo para observações
   recommendationCount?: number;
   recommendedBy?: string[];
 }

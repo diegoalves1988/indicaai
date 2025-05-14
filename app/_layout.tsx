@@ -1,7 +1,7 @@
-import { Stack, useRouter, useSegments, useFocusEffect } from 'expo-router';
+import { Stack, useFocusEffect, useRouter, useSegments } from 'expo-router';
 import { useCallback } from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { ActivityIndicator, View } from 'react-native';
+import { useAuth } from '../hooks/useAuth';
 
 export default function RootLayout() {
   const { user, loading } = useAuth();
@@ -59,6 +59,9 @@ export default function RootLayout() {
 
       {/* Tela para exibir perfil do profissional */}
       <Stack.Screen name="professional-profile" options={{ headerShown: false }} />
+
+      {/* Tela para editar perfil do profissional */}
+      <Stack.Screen name="edit-professional-profile" options={{ headerShown: false }} />
     </Stack>
   );
 }
