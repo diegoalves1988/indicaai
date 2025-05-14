@@ -9,12 +9,12 @@
 ## 🛠️ Stack  
 - **Frontend**: React Native (Expo)  
 - **Backend**: Firebase (Firestore, Auth)  
-- **Estilo**: TailwindCSS (NativeWind)  
+- **Estilo**: TailwindCSS (NativeWind)  (Não implementado ainda)
 
 ## 📌 Roadmap  
 - ✅ **v1.0**: MVP com cadastro e recomendações  
-- 🚧 **v1.1**: Filtro por localização (em desenvolvimento)  
-- 📅 **v1.2**: Categorias profissionais  
+- 🚧 **v1.1**: Filtro por localização (já implementado)  
+- 📅 **v1.2**: Categorias/especialidades profissionais  
 [Detalhes do escopo](/docs/scope.md)  
 
 ## 🚀 Como Usar  

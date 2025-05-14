@@ -7,7 +7,8 @@ Conectar usuários a profissionais qualificados através de um sistema de indica
 
 ## 📆 Versão Atual: v1.0  
 ### ✅ Funcionalidades Implementadas  
-- Cadastro de profissionais  
+- Cadastro de profissionais
+- Adição/Remoção de amigos  
 - Sistema de recomendação  
 - Perfil público básico  
 
@@ -40,9 +41,9 @@ Conectar usuários a profissionais qualificados através de um sistema de indica
 | **Tecnologia**    | Montagem de PC, Instalação de Câmeras      |                                 |
 
 ### 🔧 Regras de Negócio  
-1. **Hierarquia fixa**: Categorias só podem ser adicionadas pelo admin.  
+1. **Hierarquia fixa**: Categorias e especialidades só podem ser adicionadas pelo admin.  
 2. **Sugestões**: Usuários podem propor novas especialidades (aprovadas manualmente).  
-3. **Múltiplas especialidades**: Ex: "Eletricista + Instalador de Câmeras".  
+3. **Múltiplas especialidades**: Ex: "Um usuário pode ser eletricista e instalador de ar-condicionado".  
 
 ---
 
