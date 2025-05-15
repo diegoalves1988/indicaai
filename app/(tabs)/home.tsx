@@ -235,7 +235,7 @@ const HomeScreen = () => {
           <View style={styles.searchContainer}>
             <Ionicons name="search-outline" size={20} color="#8E8E93" style={styles.searchIcon} />
             <TextInput
-              placeholder="Buscar por nome, cidade, especialidade..."
+              placeholder="Busque aqui"
               value={searchQuery}
               onChangeText={setSearchQuery}
               style={styles.searchInput}

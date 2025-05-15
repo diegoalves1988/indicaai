@@ -1,6 +1,7 @@
 import { Stack, useFocusEffect, useRouter, useSegments } from 'expo-router';
 import { useCallback } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 
 export default function RootLayout() {
@@ -27,41 +28,45 @@ export default function RootLayout() {
   // Exibe um indicador de carregamento enquanto verifica o estado de autenticação
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        
-      </View>
+      <View style={styles.loaderContainer}>
+      <ActivityIndicator size="large" color="#007AFF" />
+    </View>
     );
   }
 
   // Define as telas do Stack Navigator
   return (
-    <Stack screenOptions={{
-      headerShown: false, // Remove cabeçalho de todas as tabs
-    }}>
-      {/* Página inicial (index.tsx) */}
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-
-      {/* Página inicial após o login */}
-      <Stack.Screen name="home" options={{ headerShown: false }} />
-
-      {/* Tela de completar perfil */}
-      <Stack.Screen name="complete-profile" options={{ headerShown: false }} />
-
-      {/* Tela de "Esqueci a senha" */}
-      <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
-
-      {/* Tela de "Criar conta" */}
-      <Stack.Screen name="register" options={{ headerShown: false }} />
-
-      {/* Tela para exibir perfil do amigo */}
-      <Stack.Screen name="friend-profile" options={{ headerShown: false }} />
-
-      {/* Tela para exibir perfil do profissional */}
-      <Stack.Screen name="professional-profile" options={{ headerShown: false }} />
-
-      {/* Tela para editar perfil do profissional */}
-      <Stack.Screen name="edit-professional-profile" options={{ headerShown: false }} />
-    </Stack>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle={Platform.OS === 'ios' ? 'dark-content' : 'default'} />
+      <Stack screenOptions={{
+        headerShown: false, 
+      }}>
+        <Stack.Screen name="index" />
+        {/* As rotas dentro de (tabs) são gerenciadas pelo _layout.tsx de (tabs) */}
+        <Stack.Screen name="(tabs)" /> 
+        <Stack.Screen name="complete-profile" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="friend-profile" />
+        <Stack.Screen name="professional-profile" />
+        <Stack.Screen name="edit-professional-profile" />
+        <Stack.Screen name="register-professional" />
+      </Stack>
+    </SafeAreaView>
   );
 }
+
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF', // Cor de fundo padrão, pode ser ajustada
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+});
+
