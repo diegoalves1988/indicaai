@@ -1,9 +1,10 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { useLocalSearchParams, useRouter  } from "expo-router";
-import { getUserProfile, removeFriend } from "../services/userService";
-import { getProfessionals } from "../services/professionalService";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../hooks/useAuth";
+import { getProfessionals } from "../services/professionalService";
+import { getUserProfile, removeFriend } from "../services/userService";
 
 const FriendProfileScreen = () => {
   const { friendId } = useLocalSearchParams();
@@ -17,22 +18,19 @@ const FriendProfileScreen = () => {
     const fetchFriendProfile = async () => {
       try {
         if (!friendId) return;
-        
+
         // Busca os dados do amigo
         const friendData = await getUserProfile(friendId);
         setFriend(friendData);
-        console.log("Amigo encontrado:", friendData);
-  
+
         // Busca todos os profissionais
         const professionals = await getProfessionals();
-        console.log("Profissionais encontrados:", professionals);
-  
+
         // Filtra os profissionais recomendados pelo amigo
-        const filteredProfessionals = professionals.filter(prof => 
-          prof.recommendedBy && prof.recommendedBy.includes(friendId) // 🚀 Corrigido aqui!
+        const filteredProfessionals = professionals.filter(
+          (prof) => prof.recommendedBy && prof.recommendedBy.includes(friendId)
         );
-  
-        console.log("Profissionais recomendados pelo amigo:", filteredProfessionals);
+
         setRecommendedProfessionals(filteredProfessionals);
       } catch (error) {
         console.error("Erro ao buscar perfil do amigo:", error);
@@ -40,33 +38,28 @@ const FriendProfileScreen = () => {
         setLoading(false);
       }
     };
-  
+
     fetchFriendProfile();
   }, [friendId]);
-  
-  // Função para lidar com a remoção do amigo
+
   const handleRemoveFriend = async () => {
     if (!user || !friendId) return;
-  
+
     try {
-      // Confirmação antes de remover
       Alert.alert(
         "Remover amigo",
         `Tem certeza que deseja remover ${friend?.name} dos seus amigos?`,
         [
+          { text: "Cancelar", style: "cancel" },
           {
-            text: "Cancelar",
-            style: "cancel"
-          },
-          { 
-            text: "Remover", 
+            text: "Remover",
             onPress: async () => {
               await removeFriend(user.uid, friendId.toString());
               Alert.alert("Sucesso", "Amigo removido com sucesso!");
-              router.back(); // Volta para a tela anterior
+              router.back();
             },
-            style: "destructive"
-          }
+            style: "destructive",
+          },
         ]
       );
     } catch (error) {
@@ -76,54 +69,148 @@ const FriendProfileScreen = () => {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" style={{ flex: 1, justifyContent: "center" }} />;
+    return <View style={styles.centered}><ActivityIndicator size="large" color="#007AFF" /></View>;
+  }
+
+  if (!friend) {
+    return <View style={styles.centered}><Text>Amigo não encontrado.</Text></View>;
   }
 
   return (
-    <View style={styles.container}>
-      {friend ? (
-        <>
-          <Text style={styles.name}>{friend.name}</Text>
-          <Text style={styles.info}>Telefone: {friend.phone}</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.profileHeader}>
+        <UserAvatar photoURL={friend.photoURL} name={friend.name} size={120} />
+        <Text style={styles.name}>{friend.name}</Text>
+      </View>
 
-          <TouchableOpacity style={styles.removeButton} onPress={handleRemoveFriend}>
-            <Text style={styles.removeButtonText}>Remover amigo</Text>
-          </TouchableOpacity>
+      <View style={styles.section}>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>E-mail:</Text>
+          <Text style={styles.infoValue}>{friend.email || "Não informado"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Cidade:</Text>
+          <Text style={styles.infoValue}>{friend.city || "Não informada"}</Text>
+        </View>
+      </View>
 
-          <Text style={styles.sectionTitle}>Profissionais recomendados</Text>
-          {recommendedProfessionals.length > 0 ? (
-            <FlatList
-              data={recommendedProfessionals}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-             <TouchableOpacity onPress={() => router.push({ pathname: "/professional-profile", params: { id: item.id } })}>
-              <View style={styles.professionalItem}>
-                <Text style={styles.professionalName}>{item.name}</Text>
-                <Text style={styles.professionalInfo}>{item.category} | {item.city}</Text>
-              </View>
-            </TouchableOpacity>
-              )}
-            />
-          ) : (
-            <Text>Este amigo ainda não recomendou nenhum profissional.</Text>
-          )}
-        </>
-      ) : (
-        <Text>Usuário não encontrado.</Text>
-      )}
-    </View>
+      <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveFriend}>
+        <Text style={styles.buttonText}>Remover Amigo</Text>
+      </TouchableOpacity>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Profissionais Recomendados</Text>
+        {recommendedProfessionals.length > 0 ? (
+          recommendedProfessionals.map((prof) => (
+            <View key={prof.id} style={styles.professionalItem}>
+              <Text style={styles.professionalName}>{prof.name}</Text>
+              <Text style={styles.professionalInfo}>
+                {prof.category} | {prof.city}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.infoValue}>Este amigo ainda não recomendou nenhum profissional.</Text>
+        )}
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  name: { fontSize: 24, fontWeight: "bold" },
-  info: { fontSize: 16, marginBottom: 10 },
-  sectionTitle: { fontSize: 20, fontWeight: "bold", marginTop: 20, marginBottom: 10 },
-  professionalItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: "#ccc" },
-  professionalName: { fontSize: 18, fontWeight: "bold" },
-  removeButton: { backgroundColor: "red", padding: 10, borderRadius: 5, marginTop: 10 },
-  removeButtonText: { color: "white", textAlign: "center", fontWeight: "bold" }
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+  },
+  profileHeader: {
+    alignItems: "center",
+    marginBottom: 25,
+  },
+  name: {
+    fontSize: 26,
+    fontWeight: "bold",
+    marginTop: 15,
+    color: "#333",
+    textAlign: "center",
+  },
+  section: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#007AFF",
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    paddingBottom: 10,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  infoLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#555",
+  },
+  infoValue: {
+    fontSize: 16,
+    color: "#333",
+    flexShrink: 1,
+  },
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  removeButton: {
+    backgroundColor: "#DC3545",
+  },
+  professionalItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  professionalName: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  professionalInfo: {
+    fontSize: 16,
+  },
 });
 
 export default FriendProfileScreen;

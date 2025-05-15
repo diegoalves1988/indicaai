@@ -198,13 +198,13 @@ export async function getSuggestedFriends(userId: string): Promise<UserProfile[]
   const usersRef = collection(db, "users");
   const currentUserProfile = await getUserProfile(userId);
   const currentFriends = currentUserProfile?.friends || [];
-  
+
   const querySnapshot = await getDocs(usersRef);
   return querySnapshot.docs
     .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
     .filter(profile => 
-      profile.userId !== userId && 
-      !currentFriends.includes(profile.userId)
+      profile.id !== userId && // Corrigido para usar 'id' em vez de 'userId'
+      !currentFriends.includes(profile.id) // Certifique-se de usar 'id' aqui também
     );
 }
 
