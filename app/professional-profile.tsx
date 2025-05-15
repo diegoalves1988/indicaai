@@ -213,10 +213,10 @@ const ProfessionalProfileScreen = () => {
         <View style={styles.infoRowVertical}>
           <View style={styles.infoRowHeader}>
             <MaterialIcons name="info-outline" size={24} color="#4F4F4F" style={styles.icon} />
-            <Text style={styles.infoLabel}>Sobre / Observações:</Text>
+            <Text style={styles.infoLabel}>Descrição:</Text>
           </View>
-          <Text style={[styles.infoValue, styles.observationsText]}>
-            {professional.observations || "Nenhuma observação adicional fornecida."}
+          <Text style={[styles.infoValue, styles.bioText]}>
+            {professional.bio || "Nenhuma descrição adicional fornecida."}
           </Text>
         </View>
       </View>
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     textDecorationLine: "underline",
   },
-  observationsText: {
+  bioText: {
     lineHeight: 24, // Melhorar legibilidade para textos longos
     textAlign: 'justify',
   },
