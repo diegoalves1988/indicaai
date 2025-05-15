@@ -129,7 +129,7 @@ const EditProfessionalProfile = () => {
         ))}
       </View>
 
-      <Text style={styles.label}>Observações:</Text>
+      <Text style={styles.label}>Bio:</Text>
       <TextInput
         value={observations}
         onChangeText={setObservations}
