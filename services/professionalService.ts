@@ -4,10 +4,10 @@ import { db } from "./firebase";
 interface Professional {
   userId: string;
   name: string;
-  category: string; // Mantido por enquanto, categorias planejadas para v1.1
-  specialties: string[]; // Alterado de specialty: string
+  category: string;
+  specialties: string[];
   city: string;
-  observations?: string; // Adicionado campo para observações
+  bio?: string;
   recommendationCount?: number;
   recommendedBy?: string[];
 }

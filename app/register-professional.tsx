@@ -3,32 +3,17 @@ import { doc, updateDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   Alert,
-  Button,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import SpecialtySelector from "../components/SpecialtySelector";
 import { useAuth } from "../hooks/useAuth";
 import { db } from "../services/firebase";
 import { registerProfessional } from "../services/professionalService";
-
-const specialties = [
-  "Pedreiro",
-  "Eletricista",
-  "Encanador",
-  "Jardineiro",
-  "Faxineira",
-  "Diarista",
-  "Pintor",
-  "Carpinteiro",
-  "Marceneiro",
-  "Montador de Móveis",
-  "Instalador de Câmeras",
-  "Técnico de Informática",
-];
 
 const RegisterProfessional = () => {
   const { user } = useAuth();
@@ -36,7 +21,6 @@ const RegisterProfessional = () => {
   const [category, setCategory] = useState("");
   const [city, setCity] = useState("");
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
   const handleRegister = async () => {
@@ -71,99 +55,111 @@ const RegisterProfessional = () => {
     }
   };
 
-  const toggleSpecialty = (specialty: string) => {
-    if (selectedSpecialties.includes(specialty)) {
-      setSelectedSpecialties((prev) => prev.filter((item) => item !== specialty));
-    } else {
-      setSelectedSpecialties((prev) => [...prev, specialty]);
-    }
-  };
-
-  const filteredSpecialties = specialties.filter((specialty) =>
-    specialty.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <View style={styles.container}>
-      <Text>Nome:</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
-      />
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+        <Text style={styles.label}>Nome:</Text>
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="Digite seu nome"
+          style={styles.input}
+        />
 
-      <Text>Categoria (opcional):</Text>
-      <TextInput
-        value={category}
-        onChangeText={setCategory}
-        style={styles.input}
-      />
+        <Text style={styles.label}>Categoria (opcional):</Text>
+        <TextInput
+          value={category}
+          onChangeText={setCategory}
+          placeholder="Ex.: Eletricista, Encanador"
+          style={styles.input}
+        />
+      </View>
 
-      <Text>Especialidades:</Text>
-      <TextInput
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        placeholder="Pesquisar especialidades..."
-        style={styles.searchInput}
-      />
-      <FlatList
-        data={filteredSpecialties}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.specialtyItem,
-              selectedSpecialties.includes(item) && styles.selectedSpecialty,
-            ]}
-            onPress={() => toggleSpecialty(item)}
-          >
-            <Text
-              style={[
-                styles.specialtyText,
-                selectedSpecialties.includes(item) && styles.selectedSpecialtyText,
-              ]}
-            >
-              {item}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Localização</Text>
+        <Text style={styles.label}>Cidade:</Text>
+        <TextInput
+          value={city}
+          onChangeText={setCity}
+          placeholder="Digite sua cidade"
+          style={styles.input}
+        />
+      </View>
 
-      <Text>Cidade:</Text>
-      <TextInput
-        value={city}
-        onChangeText={setCity}
-        style={styles.input}
-      />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Especialidades</Text>
+        <SpecialtySelector
+          selectedSpecialties={selectedSpecialties}
+          onChange={setSelectedSpecialties}
+        />
+      </View>
 
-      <Button title="Cadastrar" onPress={handleRegister} />
-    </View>
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Cadastrar</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
-  input: { borderBottomWidth: 1, marginBottom: 10 },
-  searchInput: {
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  section: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#007AFF",
+    marginBottom: 15,
     borderBottomWidth: 1,
-    marginBottom: 10,
-    padding: 8,
-    backgroundColor: "#f9f9f9",
+    borderBottomColor: "#E0E0E0",
+    paddingBottom: 10,
   },
-  specialtyItem: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-  },
-  selectedSpecialty: {
-    backgroundColor: "#007AFF",
-  },
-  specialtyText: {
+  label: {
     fontSize: 16,
+    fontWeight: "600",
+    color: "#555",
+    marginBottom: 8,
   },
-  selectedSpecialtyText: {
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    marginBottom: 15,
+  },
+  button: {
+    backgroundColor: "#007AFF",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  buttonText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

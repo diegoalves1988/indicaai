@@ -1,28 +1,21 @@
-import { useRouter } from 'expo-router';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import { Alert, Button, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useAuth } from '../hooks/useAuth';
-import { db } from '../services/firebase';
-import { updateProfessional } from '../services/professionalService'; // Assumindo que getProfessionalByUserId será criada ou adaptada
-
-// TODO: Implementar um componente de seleção múltipla para especialidades
-// Exemplo de lista de especialidades (pode vir do backend ou ser fixa)
-const allSpecialties = [
-  "Pedreiro", "Eletricista", "Encanador", "Jardineiro", "Faxineira",
-  "Diarista", "Pintor", "Carpinteiro", "Marceneiro", "Montador de Móveis",
-  "Instalador de Câmeras", "Técnico de Informática"
-];
+import { useRouter } from "expo-router";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { Alert, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import SpecialtySelector from "../components/SpecialtySelector";
+import { useAuth } from "../hooks/useAuth";
+import { db } from "../services/firebase";
+import { updateProfessional } from "../services/professionalService";
 
 const EditProfessionalProfile = () => {
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [professionalId, setProfessionalId] = useState<string | null>(null);
-  const [name, setName] = useState('');
-  const [city, setCity] = useState('');
+  const [name, setName] = useState("");
+  const [city, setCity] = useState("");
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
-  const [observations, setObservations] = useState('');
+  const [bio, setBio] = useState("");
 
   useEffect(() => {
     const fetchProfessionalData = async () => {
@@ -38,10 +31,10 @@ const EditProfessionalProfile = () => {
           const professionalDoc = querySnapshot.docs[0]; // Pega o primeiro resultado
           const data = professionalDoc.data();
           setProfessionalId(professionalDoc.id);
-          setName(data.name || '');
-          setCity(data.city || '');
+          setName(data.name || "");
+          setCity(data.city || "");
           setSelectedSpecialties(data.specialties || []); // Garante que seja um array
-          setObservations(data.observations || '');
+          setBio(data.bio || "");
         } else {
           Alert.alert("Erro", "Perfil profissional não encontrado.");
           router.back(); // Volta se não encontrar perfil
@@ -59,11 +52,11 @@ const EditProfessionalProfile = () => {
 
   const handleUpdate = async () => {
     if (!professionalId) {
-        Alert.alert("Erro", "ID do profissional não encontrado.");
-        return;
+      Alert.alert("Erro", "ID do profissional não encontrado.");
+      return;
     }
     if (!name || !city || selectedSpecialties.length === 0) {
-      Alert.alert('Erro', 'Nome, cidade e pelo menos uma especialidade são obrigatórios.');
+      Alert.alert("Erro", "Nome, cidade e pelo menos uma especialidade são obrigatórios.");
       return;
     }
 
@@ -73,25 +66,16 @@ const EditProfessionalProfile = () => {
         name,
         city,
         specialties: selectedSpecialties,
-        observations,
+        bio,
       });
-      Alert.alert('Sucesso', 'Perfil profissional atualizado!');
+      Alert.alert("Sucesso", "Perfil profissional atualizado!");
       router.back(); // Volta para a tela anterior após salvar
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
-      Alert.alert('Erro', 'Não foi possível atualizar o perfil.');
+      Alert.alert("Erro", "Não foi possível atualizar o perfil.");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-  };
-
-  // Função para lidar com a seleção/desseleção de especialidades
-  const toggleSpecialty = (specialty: string) => {
-    setSelectedSpecialties(prev =>
-      prev.includes(specialty)
-        ? prev.filter(s => s !== specialty)
-        : [...prev, specialty]
-    );
   };
 
   if (loading) {
@@ -116,23 +100,15 @@ const EditProfessionalProfile = () => {
         placeholder="Cidade onde atua"
       />
 
-      <Text style={styles.label}>Especialidades:</Text>
-      <View style={styles.specialtiesContainer}>
-        {allSpecialties.map(spec => (
-          <View key={spec} style={styles.checkboxContainer}>
-            {/* TODO: Substituir por um componente Checkbox real */}
-            <Button 
-              title={`${selectedSpecialties.includes(spec) ? '✅' : '⬜️'} ${spec}`}
-              onPress={() => toggleSpecialty(spec)}
-            />
-          </View>
-        ))}
-      </View>
+      <SpecialtySelector
+        selectedSpecialties={selectedSpecialties}
+        onChange={setSelectedSpecialties}
+      />
 
-      <Text style={styles.label}>Bio:</Text>
+      <Text style={styles.label}>Sobre mim:</Text>
       <TextInput
-        value={observations}
-        onChangeText={setObservations}
+        value={bio}
+        onChangeText={setBio}
         style={[styles.input, styles.textArea]}
         placeholder="Detalhes sobre seus serviços, experiência, etc."
         multiline
@@ -152,28 +128,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginBottom: 5,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     padding: 10,
     marginBottom: 15,
     borderRadius: 5,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   textArea: {
     height: 100,
-    textAlignVertical: 'top', // Para alinhar o texto no topo em Android
-  },
-  specialtiesContainer: {
-    marginBottom: 15,
-    flexDirection: 'row', // Ajustar conforme o componente de Checkbox
-    flexWrap: 'wrap',     // Para quebrar linha
-  },
-  checkboxContainer: {
-    marginRight: 10, // Espaçamento entre checkboxes
-    marginBottom: 10,
+    textAlignVertical: "top", // Para alinhar o texto no topo em Android
   },
 });
 
