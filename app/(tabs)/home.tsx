@@ -223,7 +223,7 @@ const HomeScreen = () => {
           <View style={styles.header}>
             <View style={styles.userInfoContainer}>
               <UserAvatar photoURL={item.userData?.photoURL} name={item.userData?.name} size={40} />
-              <Text style={styles.userInfoText}>Bem-vindo, {item.userData?.name || "Usuário"}</Text>
+              <Text style={styles.userInfoText}>Olá, {item.userData?.name || "Usuário"}</Text>
             </View>
             <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
               <Ionicons name="exit-outline" size={28} color="#007AFF" />
