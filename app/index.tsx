@@ -24,15 +24,10 @@ export default function Login() {
   const router = useRouter();
 
   // Configuração do Google Sign-In
-  // Substitua pelos seus IDs de cliente OAuth 2.0 do Google Cloud Console
-  // Para web, você precisa do Web client ID.
-  // Para Android/iOS standalone, você precisará configurar os respectivos client IDs.
-  // Por enquanto, usaremos placeholders ou apenas o web para teste no Expo Go.
+  // Usando o ID do cliente da Web do Firebase para ambos webClientId e expoClientId
   const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: "YOUR_EXPO_GO_CLIENT_ID", // Pode ser o mesmo que o Web Client ID para Expo Go
-    iosClientId: "YOUR_IOS_CLIENT_ID",
-    androidClientId: "YOUR_ANDROID_CLIENT_ID",
-    webClientId: "734783369586-enpq5iv33vkfbbc7j91qk9gb9iuj17fe.apps.googleusercontent.com",
+    expoClientId: "859975350986-ti8efpo82l4f14spa7ss3pipm6kuiiog.apps.googleusercontent.com", // Mesmo que o Web Client ID para Expo Go
+    webClientId: "859975350986-ti8efpo82l4f14spa7ss3pipm6kuiiog.apps.googleusercontent.com", // ID do cliente da Web do Firebase
   });
 
   useEffect(() => {
@@ -156,12 +151,8 @@ export default function Login() {
 
       <TouchableOpacity
         style={[styles.button, styles.googleButton]}
-        onPress={() => {
-          // Antes de chamar o promptAsync, você deve substituir os Client IDs no hook useAuthRequest
-          // Alert.alert("Configuração Pendente", "Os Client IDs do Google precisam ser configurados no código para esta funcionalidade.");
-          promptAsync(); // Descomente e use após configurar os IDs
-        }}
-        // disabled={!request} // Pode ser útil desabilitar enquanto o request não está pronto
+        onPress={() => promptAsync()}
+        disabled={!request}
       >
         <FontAwesome name="google" size={20} color="white" style={styles.icon} />
         <Text style={styles.buttonText}>Entrar com Google</Text>
@@ -238,4 +229,3 @@ const styles = StyleSheet.create({
     color: "#888",
   },
 });
-
