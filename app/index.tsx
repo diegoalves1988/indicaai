@@ -100,7 +100,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#283593", // Azul escuro inspirado no header da imagem
+    backgroundColor: "#1d3f5d", // Azul escuro inspirado no header da imagem
   },
   innerContainer: { // Adicionado para centralizar o conteúdo e aplicar padding
     flex: 1,

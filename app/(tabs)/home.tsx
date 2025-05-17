@@ -142,7 +142,7 @@ const HomeScreen = () => {
 
   return (
     <ScrollView style={styles.wrapper} contentContainerStyle={{ paddingBottom: 40 }}>
-      <LinearGradient colors={["#2C3EFA", "#4A00E0"]} style={styles.header}>
+      <LinearGradient colors={["#1d3f5d", "#0F2027"]} style={styles.header}>
         <View style={styles.userInfoContainer}>
           <UserAvatar photoURL={userData?.photoURL} name={userData?.name} size={40} />
           <Text style={styles.userInfoText}>Olá, {userData?.name || "Usuário"}</Text>
@@ -223,10 +223,10 @@ const HomeScreen = () => {
 
       {!userData?.professionalProfile && (
         <TouchableOpacity
-          style={{ margin: 20, backgroundColor: "#007AFF", padding: 14, borderRadius: 10, alignItems: "center" }}
+          style={{ margin: 20, backgroundColor: "#FFFFFF", padding: 14, borderRadius: 10, borderColor: "#1d3f5d", borderWidth: 1, alignItems: "center" }}
           onPress={() => router.push("/register-professional")}
         >
-          <Text style={{ color: "white", fontWeight: "bold" }}>Quero ser profissional</Text>
+          <Text style={{ color: "#1d3f5d", fontWeight: "bold", borderRadius: 18 }}>Quero ser profissional</Text>
         </TouchableOpacity>
       )}
     </ScrollView>
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   signOutButton: {
-    padding: 6,
+    padding: 6
   },
   searchContainer: {
     flexDirection: "row",
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   chip: {
-    backgroundColor: "#2C3EFA",
+    backgroundColor: "#1d3f5d",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 24,
