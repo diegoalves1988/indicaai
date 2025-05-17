@@ -1,72 +1,23 @@
 import { FontAwesome } from "@expo/vector-icons";
-import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
-import { GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import React, { useState } from "react";
 import {
   Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import { auth, db, sendEmailVerification } from "../services/firebase"; // sendEmailVerification importado
+import { auth, db } from "../services/firebase";
 
-// Necessário para o fluxo de autenticação web do Expo Auth Session
-WebBrowser.maybeCompleteAuthSession();
-
+// Versão simplificada sem o login Google para restaurar o funcionamento básico
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-
-  // Configuração do Google Sign-In
-  // Usando o ID do cliente da Web do Firebase para ambos webClientId e expoClientId
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId: "859975350986-ti8efpo82l4f14spa7ss3pipm6kuiiog.apps.googleusercontent.com", // Mesmo que o Web Client ID para Expo Go
-    webClientId: "859975350986-ti8efpo82l4f14spa7ss3pipm6kuiiog.apps.googleusercontent.com", // ID do cliente da Web do Firebase
-  });
-
-  useEffect(() => {
-    if (response?.type === "success") {
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(auth, credential)
-        .then(async (userCredential) => {
-          const user = userCredential.user;
-          // Verificar se é um novo usuário ou existente
-          const userRef = doc(db, "users", user.uid);
-          const userSnap = await getDoc(userRef);
-
-          if (!userSnap.exists()) {
-            // Novo usuário via Google
-            await setDoc(userRef, {
-              uid: user.uid,
-              email: user.email,
-              name: user.displayName,
-              photoURL: user.photoURL,
-              profileComplete: false, // Perfil inicial incompleto
-              createdAt: new Date().toISOString(),
-            });
-            router.replace("/complete-profile");
-          } else {
-            // Usuário existente via Google
-            if (userSnap.data()?.profileComplete) {
-              router.replace("/(tabs)/home");
-            } else {
-              router.replace("/complete-profile");
-            }
-          }
-        })
-        .catch((error) => {
-          console.error("Erro no login com Google Credential:", error);
-          Alert.alert("Erro", "Não foi possível fazer login com o Google.");
-        });
-    }
-  }, [response]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -78,32 +29,7 @@ export default function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
-        Alert.alert(
-          "Verificação de E-mail",
-          "Seu e-mail ainda não foi verificado. Por favor, verifique sua caixa de entrada ou spam. Deseja reenviar o e-mail de confirmação?",
-          [
-            {
-              text: "Cancelar",
-              style: "cancel",
-            },
-            {
-              text: "Reenviar E-mail",
-              onPress: async () => {
-                try {
-                  await sendEmailVerification(user);
-                  Alert.alert("E-mail Enviado", "Um novo e-mail de confirmação foi enviado para " + user.email);
-                } catch (error) {
-                  console.error("Erro ao reenviar e-mail de verificação:", error);
-                  Alert.alert("Erro", "Não foi possível reenviar o e-mail de confirmação.");
-                }
-              },
-            },
-          ]
-        );
-        return; // Impede o login até que o e-mail seja verificado
-      }
-
+      // Verificar se o perfil está completo
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
 
@@ -112,15 +38,9 @@ export default function Login() {
       } else {
         router.replace("/complete-profile");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro ao fazer login:", error);
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        Alert.alert("Erro", "Email ou senha incorretos.");
-      } else if (error.code === 'auth/too-many-requests'){
-        Alert.alert("Erro", "Muitas tentativas de login. Tente novamente mais tarde.");
-      } else {
-        Alert.alert("Erro", "Ocorreu um erro ao fazer login.");
-      }
+      Alert.alert("Erro", "Email ou senha incorretos.");
     }
   };
 
@@ -151,8 +71,7 @@ export default function Login() {
 
       <TouchableOpacity
         style={[styles.button, styles.googleButton]}
-        onPress={() => promptAsync()}
-        disabled={!request}
+        onPress={() => Alert.alert("Em breve", "Login com Google em manutenção. Por favor, use email e senha por enquanto.")}
       >
         <FontAwesome name="google" size={20} color="white" style={styles.icon} />
         <Text style={styles.buttonText}>Entrar com Google</Text>
