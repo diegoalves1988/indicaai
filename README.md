@@ -12,9 +12,19 @@
 - **Estilo**: TailwindCSS (NativeWind)  (Não implementado ainda)
 
 ## 📌 Roadmap  
-- ✅ **v1.0**: MVP com cadastro e recomendações  
-- 🚧 **v1.1**: Filtro por localização (já implementado)  
-- 📅 **v1.2**: Categorias/especialidades profissionais  
+- **v1.0**: MVP com cadastro e recomendações  
+- **v1.1**: Filtro por localização (já implementado)  
+- **v1.2**: Categorias/especialidades profissionais 
+- **v1.3**: Melhora no login (confirmação de e-mail) 
+
+
+## 📌 Backlog
+- Login com Google
+- Melhorar interface da home, tela de login, criar conta e esqueci senha
+- Otimizar o CSS
+- Excluir perfil profissional
+- Excluir conta do usuário
+
 [Detalhes do escopo](/docs/scope.md)  
 
 ## 🚀 Como Usar  

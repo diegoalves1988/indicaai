@@ -15,8 +15,8 @@ import {
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../hooks/useAuth";
 import {
-  addRecommendation,
   getProfessionalById,
+  recommendProfessional,
   removeRecommendation,
 } from "../services/professionalService";
 import { getUserProfile } from "../services/userService";
@@ -67,7 +67,7 @@ const ProfessionalProfileScreen = () => {
   const handleAddRecommendation = async () => {
     if (!professional || !user) return;
     try {
-      await addRecommendation(id.toString(), user.uid);
+      await recommendProfessional(id.toString(), user.uid);
       Alert.alert("Sucesso", "Recomendação adicionada!");
       setIsRecommended(true);
       setRecommendationCount(prev => prev + 1);

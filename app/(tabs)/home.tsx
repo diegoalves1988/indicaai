@@ -1,5 +1,7 @@
+// HomeScreen.tsx reformulado com header, chips, busca, sugestões de amigos e lista de profissionais, com correção de layout
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import React, { useEffect, useState } from "react";
@@ -7,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,9 +20,7 @@ import UserAvatar from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { auth } from "../../services/firebase";
 import {
-  getProfessionals,
-  recommendProfessional,
-  removeRecommendation, // Importar a função de remover recomendação
+  getProfessionals
 } from "../../services/professionalService";
 import {
   addFriend,
@@ -32,7 +32,7 @@ interface Professional {
   id: string;
   name?: string;
   category?: string;
-  specialty?: string | string[]; // Permitir string ou array de strings
+  specialty?: string | string[];
   city?: string;
   recommendationCount?: number;
   recommendedBy?: string[];
@@ -46,333 +46,233 @@ interface SuggestedFriend {
   photoURL?: string | null;
 }
 
-// Definindo os tipos para os itens da FlatList principal
-type HomeScreenListItem = 
-  | { type: "header"; userData: any }
-  | { type: "search" }
-  | { type: "professionalsTitle" }
-  | { type: "professionalCard"; professional: Professional }
-  | { type: "emptyProfessionals" }
-  | { type: "friendsTitle" }
-  | { type: "friendsCarousel"; friends: SuggestedFriend[] }
-  | { type: "emptyFriends" }
-  | { type: "registerProfessionalButton"; isProfessional: boolean };
-
 const HomeScreen = () => {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
   const [userData, setUserData] = useState<any>(null);
-  const [isProfessional, setIsProfessional] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [filteredProfessionals, setFilteredProfessionals] = useState<Professional[]>([]);
-  const [suggestedFriends, setSuggestedFriends] = useState<SuggestedFriend[]>([]);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
+  const [suggestedFriends, setSuggestedFriends] = useState<SuggestedFriend[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const categories = ["Construção Civil", "Serviços Gerais"];
+  const specialties = ["Pedreiro", "Encanador"];
 
   const fetchData = async () => {
-    if (!user) {
-      setLoadingData(false);
-      return;
-    }
+    if (!user) return;
     setLoadingData(true);
     try {
-      // Buscar dados do usuário
       const userProfile = await getUserProfile(user.uid);
-      if (userProfile) {
-        setUserData(userProfile);
-        setIsProfessional(userProfile.professionalProfile === true);
-      }
-
-      // Buscar profissionais
+      if (userProfile) setUserData(userProfile);
       const professionalsList = await getProfessionals();
-      const professionalsWithDetails = await Promise.all(
+      const full = await Promise.all(
         professionalsList.map(async (prof) => {
-          if (prof.userId) {
-            const profUser = await getUserProfile(prof.userId);
-            return { ...prof, photoURL: profUser?.photoURL, name: profUser?.name || prof.name };
-          }
-          return prof;
+          const profile = await getUserProfile(prof.userId!);
+          return { ...prof, photoURL: profile?.photoURL, name: profile?.name };
         })
       );
-      setProfessionals(professionalsWithDetails);
-
-      // Buscar sugestões de amigos
+      setProfessionals(full);
+      setFilteredProfessionals(full);
       const suggestions = await getSuggestedFriends(user.uid);
-      setSuggestedFriends(suggestions as SuggestedFriend[]);
-
-    } catch (error) {
-      console.error("Erro ao buscar dados da Home:", error);
-      // Considerar mostrar um erro para o usuário
+      setSuggestedFriends(suggestions);
+    } catch (err) {
+      console.error("Erro ao carregar dados", err);
     } finally {
       setLoadingData(false);
     }
   };
 
   useEffect(() => {
-    if (user) {
-      fetchData();
-    }
+    if (!user) return;
+    fetchData();
   }, [user]);
 
   useFocusEffect(
     React.useCallback(() => {
-      if (user) {
-        fetchData(); // Atualiza todos os dados ao focar na tela
-      }
-    }, [user?.uid])
+      fetchData();
+    }, [])
   );
 
   useEffect(() => {
     const filtered = professionals.filter((prof) => {
-      const searchLower = searchQuery.toLowerCase();
-      const nameMatch = prof.name?.toLowerCase().includes(searchLower);
-      const cityMatch = prof.city?.toLowerCase().includes(searchLower);
-      const specialtyMatch = Array.isArray(prof.specialty)
-        ? prof.specialty.some(s => s.toLowerCase().includes(searchLower))
-        : prof.specialty?.toLowerCase().includes(searchLower);
-      const categoryMatch = prof.category?.toLowerCase().includes(searchLower);
-      return nameMatch || cityMatch || specialtyMatch || categoryMatch;
+      const query = searchQuery.toLowerCase();
+      const matchSearch =
+        prof.name?.toLowerCase().includes(query) ||
+        prof.city?.toLowerCase().includes(query) ||
+        prof.category?.toLowerCase().includes(query) ||
+        (Array.isArray(prof.specialty)
+          ? prof.specialty.some((s) => s.toLowerCase().includes(query))
+          : prof.specialty?.toLowerCase().includes(query));
+
+      const matchCategory = selectedCategory ? prof.category === selectedCategory : true;
+      const matchSpecialty = selectedSpecialty
+        ? Array.isArray(prof.specialty)
+          ? prof.specialty.includes(selectedSpecialty)
+          : prof.specialty === selectedSpecialty
+        : true;
+
+      return matchSearch && matchCategory && matchSpecialty;
     });
     setFilteredProfessionals(filtered);
-  }, [searchQuery, professionals]);
+  }, [searchQuery, selectedCategory, selectedSpecialty, professionals]);
 
-  useEffect(() => {
-    if (!user && isLoggingOut) {
-      router.replace("/");
-      setIsLoggingOut(false);
-    }
-  }, [user, isLoggingOut]);
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      setIsLoggingOut(true);
-    } catch (error) {
-      console.error("Erro ao sair:", error);
-    }
-  };
-
-  const handleAddFriend = async (friendId: string) => {
-    try {
-      if (user) {
-        await addFriend(user.uid, friendId);
-        setSuggestedFriends((prev) => prev.filter((friend) => friend.id !== friendId));
-        Alert.alert("Amigo adicionado!", "Vocês agora estão conectados.");
-      }
-    } catch (error) {
-      console.error("Erro ao adicionar amigo:", error);
-      Alert.alert("Erro", "Não foi possível adicionar o amigo.");
-    }
-  };
-
-  const hasRecommended = (professionalId: string) => {
-    const professional = professionals.find((p) => p.id === professionalId);
-    return professional?.recommendedBy?.includes(user!.uid);
-  };
-
-  const handleRecommend = async (professionalId: string) => {
-    try {
-      if (user) {
-        await recommendProfessional(professionalId, user.uid);
-        fetchData(); // Re-busca para atualizar contagem e status
-      }
-    } catch (error) {
-      console.error("Erro ao recomendar profissional:", error);
-    }
-  };
-
-  const handleRemoveRecommendation = async (professionalId: string) => {
-    try {
-      if (user) {
-        await removeRecommendation(professionalId, user.uid);
-        fetchData(); // Re-busca para atualizar contagem e status
-      }
-    } catch (error) {
-      console.error("Erro ao remover recomendação:", error);
-    }
-  };
+  const renderProfessional = ({ item }: { item: Professional }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push({ pathname: "/professional-profile", params: { id: item.id } })}
+    >
+      <UserAvatar photoURL={item.photoURL} name={item.name} size={64} />
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.role}>{Array.isArray(item.specialty) ? item.specialty[0] : item.specialty}</Text>
+      <Text style={styles.city}>{item.city}</Text>
+      <View style={styles.recommendationRow}>
+        <Ionicons name="star" size={16} color="#ffd700" />
+        <Text style={styles.recommendationText}>{item.recommendationCount || 0} recomendações</Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   if (authLoading || loadingData) {
-    return <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />;
+    return <ActivityIndicator size="large" color="#007AFF" style={{ flex: 1, justifyContent: "center" }} />;
   }
 
-  if (!user) return null;
-
-  // Construir os dados para a FlatList principal
-  const listData: HomeScreenListItem[] = [
-    { type: "header", userData: userData },
-    { type: "search" },
-    { type: "professionalsTitle" },
-    ...(filteredProfessionals.length > 0 
-        ? filteredProfessionals.map(p => ({ type: "professionalCard" as const, professional: p }))
-        : [{ type: "emptyProfessionals" as const }] 
-      ),
-    { type: "friendsTitle" },
-    suggestedFriends.length > 0 
-        ? { type: "friendsCarousel", friends: suggestedFriends }
-        : { type: "emptyFriends" }, 
-    { type: "registerProfessionalButton", isProfessional: isProfessional },
-  ];
-
-  const renderListItem = ({ item }: { item: HomeScreenListItem }) => {
-    switch (item.type) {
-      case "header":
-        return (
-          <View style={styles.header}>
-            <View style={styles.userInfoContainer}>
-              <UserAvatar photoURL={item.userData?.photoURL} name={item.userData?.name} size={40} />
-              <Text style={styles.userInfoText}>Olá, {item.userData?.name || "Usuário"}</Text>
-            </View>
-            <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
-              <Ionicons name="exit-outline" size={28} color="#007AFF" />
-            </TouchableOpacity>
-          </View>
-        );
-      case "search":
-        return (
-          <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={20} color="#8E8E93" style={styles.searchIcon} />
-            <TextInput
-              placeholder="Busque aqui"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              style={styles.searchInput}
-              placeholderTextColor="#8E8E93"
-            />
-          </View>
-        );
-      case "professionalsTitle":
-        return <Text style={styles.sectionTitle}>Profissionais Cadastrados</Text>;
-      case "professionalCard":
-        const prof = item.professional;
-        return (
-          <View style={styles.professionalCard}>
-            <TouchableOpacity onPress={() => router.push({ pathname: "/professional-profile", params: { id: prof.id } })} style={styles.professionalTouchable}>
-              <UserAvatar photoURL={prof.photoURL} name={prof.name} size={60} />
-              <View style={styles.professionalDetails}>
-                <Text style={styles.professionalName}>{prof.name}</Text>
-                <Text style={styles.professionalSubText}>Especialidades: {Array.isArray(prof.specialty) ? prof.specialty.join(", ") : prof.specialty || "N/A"}</Text>
-                <Text style={styles.professionalSubText}>Localidade: {prof.city || "N/A"}</Text>
-                <View style={styles.recommendationContainer}>
-                  <Ionicons name="star-outline" size={16} color="#FFC107" />
-                  <Text style={styles.recommendationText}>{prof.recommendationCount || 0} Recomendações</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-            {user && user.uid !== prof.userId && (
-              <TouchableOpacity 
-                style={[styles.actionButton, hasRecommended(prof.id) ? styles.removeRecommendButton : styles.recommendButton]}
-                onPress={() => hasRecommended(prof.id) ? handleRemoveRecommendation(prof.id) : handleRecommend(prof.id)}
-              >
-                <Text style={styles.actionButtonText}>
-                  {hasRecommended(prof.id) ? "Remover Recomendação" : "Recomendar"}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        );
-      case "emptyProfessionals":
-        return <Text style={styles.emptyListText}>Nenhum profissional encontrado.</Text>;
-      case "friendsTitle":
-        return <Text style={styles.sectionTitle}>Sugestões de Amigos</Text>;
-      case "friendsCarousel":
-        return (
-          <FlatList
-            data={item.friends}
-            keyExtractor={(friend) => friend.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item: friend }) => (
-              <View style={styles.friendCard}>
-                <UserAvatar photoURL={friend.photoURL} name={friend.name} size={70} />
-                <Text style={styles.friendName} numberOfLines={2}>{friend.name}</Text>
-                <TouchableOpacity onPress={() => handleAddFriend(friend.id)} style={styles.addFriendButton}>
-                  <Ionicons name="person-add-outline" size={18} color="#FFFFFF" />
-                  <Text style={styles.addFriendButtonText}>Adicionar</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            contentContainerStyle={styles.friendsCarouselContainer}
-          />
-        );
-      case "emptyFriends":
-        return <Text style={styles.emptyListText}>Nenhuma sugestão de amigo no momento.</Text>; 
-      case "registerProfessionalButton":
-        return (
-          !item.isProfessional && (
-            <View style={styles.registerProfessionalButtonContainer}>
-              <TouchableOpacity onPress={() => router.push("register-professional")} style={styles.registerProfessionalButton}>
-                <Text style={styles.registerProfessionalButtonText}>Quero ser profissional</Text>
-              </TouchableOpacity>
-            </View>
-          )
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <FlatList
-      data={listData}
-      renderItem={renderListItem}
-      keyExtractor={(item, index) => item.type + index}
-      style={styles.container}
-      contentContainerStyle={styles.mainListContent}
-      showsVerticalScrollIndicator={false}
-    />
+    <ScrollView style={styles.wrapper} contentContainerStyle={{ paddingBottom: 40 }}>
+      <LinearGradient colors={["#2C3EFA", "#4A00E0"]} style={styles.header}>
+        <View style={styles.userInfoContainer}>
+          <UserAvatar photoURL={userData?.photoURL} name={userData?.name} size={40} />
+          <Text style={styles.userInfoText}>Olá, {userData?.name || "Usuário"}</Text>
+        </View>
+        <TouchableOpacity onPress={async () => { await signOut(auth); }} style={styles.signOutButton}>
+          <Ionicons name="exit-outline" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+      </LinearGradient>
+
+      <View style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={20} color="#8E8E93" style={styles.searchIcon} />
+        <TextInput
+          placeholder="Busque aqui"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+          placeholderTextColor="#8E8E93"
+        />
+      </View>
+
+      <View style={styles.chipsContainer}>
+        {categories.map((cat) => (
+          <TouchableOpacity key={cat} style={styles.chip} onPress={() => setSelectedCategory(cat)}>
+            <Text style={styles.chipText}>{cat}</Text>
+          </TouchableOpacity>
+        ))}
+        {specialties.map((s) => (
+          <TouchableOpacity key={s} style={styles.chip} onPress={() => setSelectedSpecialty(s)}>
+            <Text style={styles.chipText}>{s}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Text style={styles.sectionTitle}>Profissionais em destaque</Text>
+
+      <FlatList
+        data={filteredProfessionals}
+        renderItem={renderProfessional}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={{ paddingHorizontal: 16 }}
+        scrollEnabled={false}
+      />
+
+      {suggestedFriends.length > 0 && (
+        <View style={{ marginTop: 16 }}>
+          <Text style={styles.sectionTitle}>Sugestões de Amigos</Text>
+          <FlatList
+            data={suggestedFriends}
+            horizontal
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "../friend-profile", params: { friendId: item.id } })}
+                style={{ marginHorizontal: 10, alignItems: "center" }}
+              >
+                <UserAvatar photoURL={item.photoURL} name={item.name} size={60} />
+                <Text numberOfLines={1} style={{ maxWidth: 100 }}>{item.name}</Text>
+                <TouchableOpacity
+                  onPress={async () => {
+                    await addFriend(user!.uid, item.id);
+                    const updated = await getSuggestedFriends(user!.uid);
+                    setSuggestedFriends(updated);
+                    Alert.alert("Amigo adicionado!", "Vocês agora estão conectados.");
+                  }}
+                  style={{ backgroundColor: "#4CAF50", padding: 6, borderRadius: 10, marginTop: 4 }}
+                >
+                  <Text style={{ color: "white", fontSize: 12 }}>Adicionar</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+          />
+        </View>
+      )}
+
+      {!userData?.professionalProfile && (
+        <TouchableOpacity
+          style={{ margin: 20, backgroundColor: "#007AFF", padding: 14, borderRadius: 10, alignItems: "center" }}
+          onPress={() => router.push("/register-professional")}
+        >
+          <Text style={{ color: "white", fontWeight: "bold" }}>Quero ser profissional</Text>
+        </TouchableOpacity>
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#F0F2F5" // Um cinza mais claro para o fundo
-  },
-  loader: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center" 
+  wrapper: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
   },
   header: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
   },
   userInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
   },
   userInfoText: {
-    fontSize: 18,
-    fontWeight: "600", // Um pouco mais de peso
-    marginLeft: 12,
-    color: "#333333"
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
   signOutButton: {
-    padding: 8, // Para facilitar o toque
+    padding: 6,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    marginVertical: 15,
+    marginTop: 10,
     backgroundColor: "#FFFFFF",
-    borderRadius: 12, // Mais arredondado
+    borderRadius: 12,
     height: 50,
     elevation: 2,
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    marginHorizontal: 16, // Adicionado para não colar nas bordas
+    marginHorizontal: 16,
   },
   searchIcon: {
     marginHorizontal: 10,
@@ -381,146 +281,72 @@ const styles = StyleSheet.create({
     flex: 1,
     height: "100%",
     fontSize: 16,
-    color: "#333333"
+    color: "#333333",
+  },
+  chipsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: 12,
+    gap: 8,
+  },
+  chip: {
+    backgroundColor: "#2C3EFA",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+  },
+  chipText: {
+    color: "#FFFFFF",
+    fontWeight: "500",
   },
   sectionTitle: {
-    fontSize: 22, // Maior
+    fontSize: 20,
     fontWeight: "bold",
-    marginTop: 24, // Mais espaço acima
-    marginBottom: 16, // Mais espaço abaixo
-    paddingHorizontal: 20,
-    color: "#1C1C1E"
-  },
-  professionalCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    elevation: 3,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  professionalTouchable: {
-    flexDirection: "row",
-    alignItems: "flex-start", // Alinhar ao topo para nomes longos
-  },
-  professionalDetails: {
+    marginVertical: 16,
     marginLeft: 16,
-    flex: 1,
-  },
-  professionalName: {
-    fontSize: 18, // Um pouco maior
-    fontWeight: "bold",
     color: "#1C1C1E",
+  },
+  row: {
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    width: "47%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1C1C1E",
+  },
+  role: {
+    fontSize: 14,
+    color: "#555",
+  },
+  city: {
+    fontSize: 13,
+    color: "#888",
     marginBottom: 4,
   },
-  professionalSubText: {
-    fontSize: 14,
-    color: "#555555",
-    marginBottom: 3,
-    lineHeight: 20, // Melhorar leitura
-  },
-  recommendationContainer: {
+  recommendationRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
+    gap: 4,
+    marginTop: 4,
   },
   recommendationText: {
-    fontSize: 14,
-    color: "#555555",
-    marginLeft: 6,
+    fontSize: 13,
+    color: "#000000",
   },
-  actionButton: {
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  recommendButton: {
-    backgroundColor: "#007AFF", // Azul primário
-  },
-  removeRecommendButton: {
-    backgroundColor: "#FF3B30", // Vermelho para remoção
-  },
-  actionButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  emptyListText: {
-    textAlign: "center",
-    marginVertical: 30,
-    color: "#8E8E93",
-    fontSize: 16,
-    paddingHorizontal: 20,
-  },
-  friendsCarouselContainer: {
-    paddingHorizontal: 16, // Espaçamento nas laterais do carrossel
-    paddingVertical: 10,
-  },
-  friendCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    padding: 16,
-    marginRight: 12, // Espaço entre os cards de amigos
-    width: 160, // Largura fixa para consistência
-    alignItems: "center",
-    elevation: 2,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    minHeight: 200, // Para acomodar conteúdo
-    justifyContent: "space-between"
-  },
-  friendName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333333",
-    textAlign: "center",
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  addFriendButton: {
-    flexDirection: "row",
-    backgroundColor: "#4CAF50", // Verde para adicionar
-    borderRadius: 20, // Mais arredondado
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addFriendButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 14,
-    marginLeft: 6,
-  },
-  registerProfessionalButtonContainer: {
-    marginHorizontal: 20,
-    marginTop: 24,
-    marginBottom: 40, // Mais espaço no final
-  },
-  registerProfessionalButton: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  registerProfessionalButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  mainListContent: {
-    paddingBottom: Platform.OS === 'ios' ? 20 : 40, // Espaço extra no final da lista
-  }
 });
 
 export default HomeScreen;
-
