@@ -1,5 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { doc, updateDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActionSheetIOS,
@@ -16,6 +17,8 @@ import {
 import MaskInput from "react-native-mask-input";
 import UserAvatar from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
+import { db } from "../../services/firebase";
+import { deleteProfessionalProfile } from "../../services/professionalService";
 import { getUserProfile, removeProfileImage, updateUserProfile, uploadProfileImage } from "../../services/userService";
 
 function UserProfileScreen() {
@@ -249,6 +252,38 @@ function UserProfileScreen() {
     }
   };
 
+  const handleDeleteProfessionalProfile = async () => {
+  if (!user) return;
+  Alert.alert(
+    "Remover Perfil Profissional",
+    "Tem certeza que deseja excluir seu perfil profissional? Essa ação não pode ser desfeita.",
+    [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Remover",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // Remove o perfil profissional e atualiza o usuário
+            await deleteProfessionalProfile(user.uid);
+
+            // Atualiza o campo professionalProfile do usuário para false
+            await updateDoc(doc(db, "users", user.uid), {
+              professionalProfile: false,
+            });
+
+            Alert.alert("Sucesso", "Perfil profissional removido.");
+            // Atualize o estado local se necessário
+            setIsProfessional(false);
+          } catch (error) {
+            Alert.alert("Erro", "Não foi possível remover o perfil profissional.");
+          }
+        },
+      },
+    ]
+  );
+};
+
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" /></View>;
   }
@@ -313,14 +348,22 @@ function UserProfileScreen() {
         <Text style={styles.buttonText}>{saving ? "Salvando..." : "Salvar Alterações Pessoais"}</Text>
       </TouchableOpacity>
 
-      {isProfessional && (
-        <TouchableOpacity
-          style={[styles.button, styles.professionalButton]}
-          onPress={navigateToEditProfessionalProfile}
-        >
-          <Text style={[styles.buttonText, { color: "#fff" }]}>Editar Perfil Profissional</Text>
-        </TouchableOpacity>
-      )}
+{isProfessional && (
+  <>
+    <TouchableOpacity
+      style={[styles.button, styles.professionalButton]}
+      onPress={navigateToEditProfessionalProfile}
+    >
+      <Text style={[styles.buttonText, { color: "#fff" }]}>Editar Perfil Profissional</Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      style={[styles.button, styles.deleteButton]}
+      onPress={handleDeleteProfessionalProfile}
+    >
+      <Text style={styles.buttonText}>Excluir Perfil Profissional</Text>
+    </TouchableOpacity>
+  </>
+)}
     </ScrollView>
   );
 }
@@ -394,8 +437,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  deleteButton: {
+  backgroundColor: "#1d3f5d",
+  marginTop: 5,
+},
   professionalButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#1d3f5d",
   },
 });
 

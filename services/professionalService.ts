@@ -124,3 +124,34 @@ export async function removeRecommendation(professionalId: string, userId: strin
     throw error;
   }
 }
+
+
+// Remove o perfil profissional e suas recomendações
+export async function deleteProfessionalProfile(userId: string) {
+  // 1. Remover o documento do profissional
+  const professionalsRef = collection(db, "professionals");
+  const snapshot = await getDocs(professionalsRef);
+  let profIdToDelete: string | null = null;
+  snapshot.forEach((docSnap) => {
+    if (docSnap.data().userId === userId) {
+      profIdToDelete = docSnap.id;
+    }
+  });
+  if (profIdToDelete) {
+    await deleteDoc(doc(db, "professionals", profIdToDelete));
+  }
+
+  // 2. Remover recomendações deste profissional em outros usuários
+  const usersRef = collection(db, "users");
+  const usersSnap = await getDocs(usersRef);
+  for (const userDoc of usersSnap.docs) {
+    const data = userDoc.data();
+    if (data.recommendedProfessionals && Array.isArray(data.recommendedProfessionals)) {
+      if (data.recommendedProfessionals.includes(userId)) {
+        await updateDoc(doc(db, "users", userDoc.id), {
+          recommendedProfessionals: arrayRemove(userId),
+        });
+      }
+    }
+  }
+}
