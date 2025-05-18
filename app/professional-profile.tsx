@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     marginTop: 15,
-    color: "#333",
+    color: "#1d3f5d",
     textAlign: "center",
   },
   section: {
@@ -266,14 +266,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#007AFF", // Cor de destaque para títulos de seção
+    color: "#1d3f5d", // Cor de destaque para títulos de seção
     marginBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
@@ -303,7 +305,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
-    color: "#333",
+    color: "#1C1C1E",
     flexShrink: 1, // Para quebrar linha se necessário
   },
   linkText: {
@@ -320,7 +322,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   specialtyTag: {
-    backgroundColor: "#E0EFFF", // Cor de fundo para tags
+    backgroundColor: "#1d3f5d", // updated to primary blue
     borderRadius: 15,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -328,7 +330,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   specialtyText: {
-    color: "#007AFF", // Cor do texto para tags
+    color: "#FFFFFF", // white text for contrast
     fontSize: 14,
     fontWeight: "500",
   },
@@ -341,7 +343,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.10,
     shadowRadius: 3,
     elevation: 2,
   },

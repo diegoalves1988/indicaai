@@ -5,7 +5,6 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
-  Button,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,7 +14,6 @@ import {
   View,
 } from "react-native";
 import MaskInput from "react-native-mask-input";
-
 import UserAvatar from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { getUserProfile, removeProfileImage, updateUserProfile, uploadProfileImage } from "../../services/userService";
@@ -274,10 +272,13 @@ function UserProfileScreen() {
         <Text style={styles.userName}>{name || "Usuário"}</Text>
       </View>
 
-      {/* Botão "Alterar Foto" visível, mas a lógica de clique no web é tratada pelo showImageOptions -> handleImageSelectionFromLibrary -> fileInputRef.current.click() */}
-      <View style={styles.buttonContainer}>
-        <Button title="Alterar Foto" onPress={showImageOptions} disabled={uploadingImage} />
-      </View>
+      <TouchableOpacity
+        style={[styles.button, uploadingImage && styles.buttonDisabled]}
+        onPress={showImageOptions}
+        disabled={uploadingImage}
+      >
+        <Text style={styles.buttonText}>Alterar Foto</Text>
+      </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Informações Pessoais</Text>
       <TextInput style={styles.input} placeholder="Nome" value={name} onChangeText={setName} />
@@ -304,29 +305,98 @@ function UserProfileScreen() {
       <TextInput style={styles.input} placeholder="Estado" value={stateValue} onChangeText={setStateValue} />
       <TextInput style={styles.input} placeholder="País" value={country} onChangeText={setCountry} />
 
-      <View style={styles.buttonContainer}>
-        <Button title={saving ? "Salvando..." : "Salvar Alterações Pessoais"} onPress={handleSave} disabled={saving || uploadingImage} />
-      </View>
+      <TouchableOpacity
+        style={[styles.button, (saving || uploadingImage) && styles.buttonDisabled]}
+        onPress={handleSave}
+        disabled={saving || uploadingImage}
+      >
+        <Text style={styles.buttonText}>{saving ? "Salvando..." : "Salvar Alterações Pessoais"}</Text>
+      </TouchableOpacity>
 
       {isProfessional && (
-        <View style={styles.buttonContainer}>
-          <Button title="Editar Perfil Profissional" onPress={navigateToEditProfessionalProfile} color="#007AFF" />
-        </View>
+        <TouchableOpacity
+          style={[styles.button, styles.professionalButton]}
+          onPress={navigateToEditProfessionalProfile}
+        >
+          <Text style={[styles.buttonText, { color: "#fff" }]}>Editar Perfil Profissional</Text>
+        </TouchableOpacity>
       )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 40 },
-  profileHeader: { alignItems: "center", marginBottom: 20 },
-  avatarLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  userName: { fontSize: 20, fontWeight: "bold", marginTop: 10 },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", marginTop: 20, marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: Platform.OS === "ios" ? 12 : 10, marginBottom: 12, backgroundColor: "#fff" },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  buttonContainer: { marginTop: 15 },
+  container: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    paddingBottom: 40,
+  },
+  profileHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  avatarLoading: {
+    position: "absolute",
+    top: 0, left: 0, right: 0, bottom: 0,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 10,
+    color: "#1d3f5d", // primary blue
+    textAlign: "center",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 24,
+    marginBottom: 10,
+    color: "#1d3f5d", // primary blue
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    paddingBottom: 6,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#1d3f5d", // primary blue
+    borderRadius: 8,
+    padding: Platform.OS === "ios" ? 12 : 10,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+    color: "#1C1C1E",
+    fontSize: 16,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  button: {
+    backgroundColor: "#1d3f5d",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 3,
+    elevation: 2,
+    marginTop: 15,
+    marginBottom: 5,
+  },
+  buttonDisabled: {
+    backgroundColor: "#A0A0A0",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  professionalButton: {
+    backgroundColor: "#007AFF",
+  },
 });
 
 export default UserProfileScreen;
-

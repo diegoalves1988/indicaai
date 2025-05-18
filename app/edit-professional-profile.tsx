@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Alert, Button, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import SpecialtySelector from "../components/SpecialtySelector";
 import { useAuth } from "../hooks/useAuth";
 import { db } from "../services/firebase";
@@ -78,8 +78,8 @@ const EditProfessionalProfile = () => {
     }
   };
 
-  if (loading) {
-    return <View style={styles.container}><Text>Carregando...</Text></View>;
+   if (loading) {
+    return <View style={styles.container}><ActivityIndicator size="large" color="#1d3f5d" /></View>;
   }
 
   return (
@@ -115,7 +115,13 @@ const EditProfessionalProfile = () => {
         numberOfLines={4}
       />
 
-      <Button title="Salvar Alterações" onPress={handleUpdate} disabled={loading} />
+        <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleUpdate}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>Salvar Alterações</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -124,19 +130,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#FFFFFF", // updated to match home.tsx
   },
   label: {
     fontSize: 16,
     marginBottom: 5,
     fontWeight: "bold",
+    color: "#1d3f5d", // updated to primary blue
+  },
+  button: {
+    backgroundColor: "#1d3f5d", // updated to primary blue
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 3,
+    elevation: 2,
+    marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "#A0A0A0",
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#1d3f5d", // updated to primary blue
     padding: 10,
     marginBottom: 15,
-    borderRadius: 5,
+    borderRadius: 8, // more rounded
     backgroundColor: "#fff",
+    color: "#1C1C1E", // dark text
+    fontSize: 16,
   },
   textArea: {
     height: 100,

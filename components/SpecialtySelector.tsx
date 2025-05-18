@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import specialties from "../services/specialties";
 
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: "bold",
     fontSize: 16,
-    color: "#007AFF",
+    color: "#1d3f5d",
     marginBottom: 10,
   },
   inputContainer: {

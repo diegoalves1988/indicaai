@@ -61,7 +61,7 @@ const HomeScreen = () => {
   const [loadingData, setLoadingData] = useState(true);
 
   const categories = ["Construção Civil", "Serviços Gerais"];
-  const specialties = ["Pedreiro", "Encanador"];
+  const [topSpecialties, setTopSpecialties] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -84,6 +84,24 @@ const HomeScreen = () => {
       );
       setProfessionals(full);
       setFilteredProfessionals(full);
+
+      // Dynamic specialties: count and get top 5
+      const specialtyCount: Record<string, number> = {};
+      full.forEach((prof) => {
+        if (Array.isArray(prof.specialty)) {
+          prof.specialty.forEach((s) => {
+            specialtyCount[s] = (specialtyCount[s] || 0) + 1;
+          });
+        } else if (prof.specialty) {
+          specialtyCount[prof.specialty] = (specialtyCount[prof.specialty] || 0) + 1;
+        }
+      });
+      const sortedSpecialties = Object.entries(specialtyCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([s]) => s);
+      setTopSpecialties(sortedSpecialties);
+
       const suggestions = await getSuggestedFriends(user.uid);
       setSuggestedFriends(suggestions);
     } catch (err) {
@@ -172,12 +190,26 @@ const HomeScreen = () => {
 
       <View style={styles.chipsContainer}>
         {categories.map((cat) => (
-          <TouchableOpacity key={cat} style={styles.chip} onPress={() => setSelectedCategory(cat)}>
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.chip,
+              selectedCategory === cat && { backgroundColor: "#007AFF" }
+            ]}
+            onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+          >
             <Text style={styles.chipText}>{cat}</Text>
           </TouchableOpacity>
         ))}
-        {specialties.map((s) => (
-          <TouchableOpacity key={s} style={styles.chip} onPress={() => setSelectedSpecialty(s)}>
+        {topSpecialties.map((s) => (
+          <TouchableOpacity
+            key={s}
+            style={[
+              styles.chip,
+              selectedSpecialty === s && { backgroundColor: "#007AFF" }
+            ]}
+            onPress={() => setSelectedSpecialty(selectedSpecialty === s ? null : s)}
+          >
             <Text style={styles.chipText}>{s}</Text>
           </TouchableOpacity>
         ))}

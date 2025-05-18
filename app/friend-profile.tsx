@@ -120,7 +120,7 @@ const FriendProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#FFFFFF", // updated to match home.tsx
   },
   contentContainer: {
     padding: 20,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#FFFFFF", // updated
   },
   profileHeader: {
     alignItems: "center",
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     marginTop: 15,
-    color: "#333",
+    color: "#1d3f5d", // updated to primary blue
     textAlign: "center",
   },
   section: {
@@ -149,14 +149,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#007AFF",
+    color: "#1d3f5d", // updated to primary blue
     marginBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
-    color: "#333",
+    color: "#1C1C1E", // updated for consistency
     flexShrink: 1,
   },
   button: {
@@ -186,12 +188,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.10,
     shadowRadius: 3,
     elevation: 2,
   },
   buttonText: {
-    color: "white",
+    color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 16,
     marginLeft: 10,
@@ -207,9 +209,11 @@ const styles = StyleSheet.create({
   professionalName: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#1d3f5d", // updated to primary blue
   },
   professionalInfo: {
     fontSize: 16,
+    color: "#555", // subtle info
   },
 });
 

@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../services/firebase";
 import { useRouter } from "expo-router";
+import { sendPasswordResetEmail } from "firebase/auth";
+import React, { useState } from "react";
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { auth } from "../services/firebase";
 
 const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState("");
@@ -24,24 +24,75 @@ const ForgotPasswordScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>Recuperar Senha</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Recuperar Senha</Text>
       <TextInput
         placeholder="Digite seu e-mail"
         value={email}
         onChangeText={setEmail}
-        style={{ borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 5 }}
+        style={styles.input}
+        placeholderTextColor="#888"
       />
-      <TouchableOpacity onPress={handleResetPassword} style={{ backgroundColor: "orange", padding: 15, borderRadius: 5 }}>
-        <Text style={{ color: "white", textAlign: "center" }}>Enviar e-mail de recuperação</Text>
+      <TouchableOpacity onPress={handleResetPassword} style={styles.button}>
+        <Text style={styles.buttonText}>Enviar e-mail de recuperação</Text>
       </TouchableOpacity>
 
       {/* Voltar para login */}
-      <TouchableOpacity onPress={() => router.push("/index")} style={{ marginTop: 15 }}>
-        <Text style={{ color: "blue", textAlign: "center" }}>Voltar para Login</Text>
+      <TouchableOpacity onPress={() => router.push("/")}>
+        <Text style={styles.loginLink}>Voltar para Login</Text>
       </TouchableOpacity>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#FFFFFF",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 30,
+    color: "#1d3f5d",
+  },
+  input: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#1d3f5d",
+    fontSize: 16,
+    color: "#1C1C1E",
+  },
+  button: {
+    backgroundColor: "#1d3f5d",
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  loginLink: {
+    color: "#007AFF",
+    textAlign: "center",
+    fontSize: 14,
+    marginTop: 10,
+  },
+});
 
 export default ForgotPasswordScreen;
