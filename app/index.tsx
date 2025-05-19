@@ -79,8 +79,8 @@ export default function Login() {
           style={[styles.button, styles.googleButton]}
           onPress={() => Alert.alert("Em breve", "Login com Google em manutenção. Por favor, use email e senha por enquanto.")}
         >
-          <FontAwesome name="google" size={20} color="white" style={styles.icon} />
-          <Text style={styles.buttonText}>Entrar com Google</Text>
+          <FontAwesome name="google" size={20} style={styles.icon} />
+          <Text style={styles.googleButtonText}>Entrar com Google</Text>
         </TouchableOpacity>
 
         <View style={styles.linksContainer}>
@@ -100,64 +100,87 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1d3f5d", // Azul escuro inspirado no header da imagem
-  },
-  innerContainer: { // Adicionado para centralizar o conteúdo e aplicar padding
-    flex: 1,
+    backgroundColor: "#1d3f5d", // degrade azul claro pode ser simulado com LinearGradient
     justifyContent: "center",
-    padding: 20,
+    alignItems: "center",
+  },
+  innerContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 30,
+    width: "90%",
+    maxWidth: 360,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 36, // Ligeiramente aumentado para mais destaque
+    fontSize: 28,
     fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 40, // Aumentado o espaçamento
-    color: "#FFFFFF", // Branco para contraste com o fundo azul
+    color: "#1d3f5d",
+    marginBottom: 32,
   },
   input: {
-    backgroundColor: "#FFFFFF", // Fundo branco para os inputs
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+    width: "100%",
+    backgroundColor: "#F9FAFB",
+    borderColor: "#D1D5DB",
     borderWidth: 1,
-    borderColor: "#5C6BC0", // Azul mais claro para a borda, da paleta da imagem
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    color: "#000000", // Texto do input preto para legibilidade
+    marginBottom: 16,
   },
   button: {
-    backgroundColor: "#3F51B5", // Azul médio inspirado nos botões da imagem
-    paddingVertical: 15,
-    borderRadius: 8,
+    backgroundColor: "#1976D2",
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: "center",
-    marginBottom: 15,
-  },
-  googleButton: {
-    backgroundColor: "#42A5F5", // Um azul diferente para o botão do Google, mas dentro da paleta
-    flexDirection: "row",
-    justifyContent: "center",
+    width: "100%",
+    marginBottom: 16,
   },
   buttonText: {
-    color: "#FFFFFF", // Texto do botão branco
-    fontWeight: "bold",
+    color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderColor: "#D1D5DB",
+    borderWidth: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 14,
+    width: "100%",
+    justifyContent: "center",
+  },
+  googleButtonText:{
+    color: "black",
+    fontSize: 16,
+    fontWeight: "600",
   },
   icon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   linksContainer: {
     flexDirection: "row",
-    marginTop: 20, // Aumentado o espaçamento superior
-    justifyContent: "center",
+    marginTop: 16,
   },
   link: {
-    color: "#90CAF9", // Azul bem claro para os links, para contraste no fundo escuro
-    fontSize: 14,
-    fontWeight: "500", // Ligeiramente mais forte
+    color: "#1976D2",
+    fontWeight: "500",
   },
   separator: {
-    fontSize: 14,
-    color: "#C5CAE9", // Cor suave para o separador, combinando com a paleta
-    marginHorizontal: 5,
+    marginHorizontal: 8,
+    color: "#6B7280",
   },
 });
