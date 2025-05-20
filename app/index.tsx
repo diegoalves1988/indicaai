@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
-  Alert, // Adicionado para KeyboardAvoidingView se necessário no futuro
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,

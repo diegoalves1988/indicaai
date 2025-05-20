@@ -4,6 +4,7 @@ import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   Alert,
+  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -75,41 +76,43 @@ export default function Register() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Criar Conta</Text>
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="E-mail"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        style={styles.input}
-      />
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Criar Conta</Text>
+        <TextInput
+          value={email}
+          onChangeText={setEmail}
+          placeholder="E-mail"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          style={styles.input}
+        />
 
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Senha (mínimo 6 caracteres)"
-        secureTextEntry
-        style={styles.input}
-      />
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Senha (mínimo 6 caracteres)"
+          secureTextEntry
+          style={styles.input}
+        />
 
-      <TextInput // Novo campo para confirmar senha
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        placeholder="Repetir Senha"
-        secureTextEntry
-        style={styles.input}
-      />
+        <TextInput // Novo campo para confirmar senha
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          placeholder="Repetir Senha"
+          secureTextEntry
+          style={styles.input}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Criar conta</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>Criar conta</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.replace("/")}>
-        <Text style={styles.loginLink}>Já tem uma conta? Faça login</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity onPress={() => router.replace("/")}>
+          <Text style={styles.loginLink}>Já tem uma conta? Faça login</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -118,7 +121,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#FFFFFF",
+    paddingBottom: 32, // margem extra para evitar sobreposição
   },
   title: {
     fontSize: 28,

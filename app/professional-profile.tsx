@@ -4,14 +4,15 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Linking, // Importar Linking para abrir o discador
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -30,6 +31,7 @@ const ProfessionalProfileScreen = () => {
   const [loading, setLoading] = useState(true);
   const [isRecommended, setIsRecommended] = useState(false);
   const [recommendationCount, setRecommendationCount] = useState(0);
+  const [recommenders, setRecommenders] = useState<any[]>([]);
 
   const fetchProfessionalProfile = async () => {
     setLoading(true);
@@ -48,6 +50,18 @@ const ProfessionalProfileScreen = () => {
       const userHasRecommended = user ? recommendedBy.includes(user.uid) : false;
       setIsRecommended(userHasRecommended);
 
+      // Buscar perfis de quem recomendou
+      if (recommendedBy.length > 0) {
+        const recommendersData = await Promise.all(
+          recommendedBy.map(async (uid: string) => {
+            const profile = await getUserProfile(uid);
+            return profile ? { ...profile, userId: uid } : null;
+          })
+        );
+        setRecommenders(recommendersData.filter(Boolean));
+      } else {
+        setRecommenders([]);
+      }
     } catch (error) {
       console.error("Erro ao buscar perfil do profissional:", error);
       Alert.alert("Erro", "Não foi possível carregar o perfil do profissional.");
@@ -138,99 +152,119 @@ const ProfessionalProfileScreen = () => {
   const professionalPhone = professional?.phone || professionalUser?.phone;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.profileHeader}>
-        <UserAvatar 
-          photoURL={professionalUser?.photoURL} 
-          name={professionalName} 
-          size={120} 
-        />
-        <Text style={styles.name}>{professionalName}</Text>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.infoRow}>
-          <MaterialIcons name="phone" size={24} color="#4F4F4F" style={styles.icon} />
-          <Text style={styles.infoLabel}>Telefone:</Text>
-          {professionalPhone ? (
-            <TouchableOpacity onPress={handleCall}>
-              <Text style={[styles.infoValue, styles.linkText]}>{professionalPhone}</Text>
-            </TouchableOpacity>
-          ) : (
-            <Text style={styles.infoValue}>Não informado</Text>
-          )}
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.profileHeader}>
+          <UserAvatar
+            photoURL={professionalUser?.photoURL}
+            name={professionalName}
+            size={120}
+          />
+          <Text style={styles.name}>{professionalName}</Text>
         </View>
-      </View>
 
-      {user && user.uid === professional.userId && (
-        <TouchableOpacity style={[styles.button, styles.editButton]} onPress={handleEditProfile}>
-          <MaterialIcons name="edit" size={20} color="white" />
-          <Text style={styles.buttonText}>Editar Meu Perfil Profissional</Text>
-        </TouchableOpacity>
-      )}
-
-      {user && user.uid !== professional.userId && !isRecommended && (
-        <TouchableOpacity style={[styles.button, styles.recommendButton]} onPress={handleAddRecommendation}>
-          <FontAwesome name="thumbs-up" size={20} color="white" />
-          <Text style={styles.buttonText}>Recomendar Este Profissional</Text>
-        </TouchableOpacity>
-      )}
-
-      {user && user.uid !== professional.userId && isRecommended && (
-        <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveRecommendation}>
-          <FontAwesome name="thumbs-down" size={20} color="white" />
-          <Text style={styles.buttonText}>Remover Indicação</Text>
-        </TouchableOpacity>
-      )}
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Detalhes do Profissional</Text>
-        
-        <View style={styles.infoRowVertical}>
-          <View style={styles.infoRowHeader}>
-            <MaterialIcons name="star" size={24} color="#4F4F4F" style={styles.icon} />
-            <Text style={styles.infoLabel}>Especialidades:</Text>
+        <View style={styles.section}>
+          <View style={styles.infoRow}>
+            <MaterialIcons name="phone" size={24} color="#4F4F4F" style={styles.icon} />
+            <Text style={styles.infoLabel}>Telefone:</Text>
+            {professionalPhone ? (
+              <TouchableOpacity onPress={handleCall}>
+                <Text style={[styles.infoValue, styles.linkText]}>{professionalPhone}</Text>
+              </TouchableOpacity>
+            ) : (
+              <Text style={styles.infoValue}>Não informado</Text>
+            )}
           </View>
-          {professional.specialties && professional.specialties.length > 0 ? (
-            <View style={styles.specialtiesContainer}>
-              {professional.specialties.map((spec: string, index: number) => (
-                <View key={index} style={styles.specialtyTag}>
-                  <Text style={styles.specialtyText}>{spec}</Text>
-                </View>
+        </View>
+
+        {user && user.uid === professional.userId && (
+          <TouchableOpacity style={[styles.button, styles.editButton]} onPress={handleEditProfile}>
+            <MaterialIcons name="edit" size={20} color="white" />
+            <Text style={styles.buttonText}>Editar Meu Perfil Profissional</Text>
+          </TouchableOpacity>
+        )}
+
+        {user && user.uid !== professional.userId && !isRecommended && (
+          <TouchableOpacity style={[styles.button, styles.recommendButton]} onPress={handleAddRecommendation}>
+            <FontAwesome name="thumbs-up" size={20} color="white" />
+            <Text style={styles.buttonText}>Recomendar Este Profissional</Text>
+          </TouchableOpacity>
+        )}
+
+        {user && user.uid !== professional.userId && isRecommended && (
+          <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveRecommendation}>
+            <FontAwesome name="thumbs-down" size={20} color="white" />
+            <Text style={styles.buttonText}>Remover Indicação</Text>
+          </TouchableOpacity>
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Detalhes do Profissional</Text>
+
+          <View style={styles.infoRowVertical}>
+            <View style={styles.infoRowHeader}>
+              <MaterialIcons name="star" size={24} color="#4F4F4F" style={styles.icon} />
+              <Text style={styles.infoLabel}>Especialidades:</Text>
+            </View>
+            {professional.specialties && professional.specialties.length > 0 ? (
+              <View style={styles.specialtiesContainer}>
+                {professional.specialties.map((spec: string, index: number) => (
+                  <View key={index} style={styles.specialtyTag}>
+                    <Text style={styles.specialtyText}>{spec}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.infoValue}>Não informadas</Text>
+            )}
+          </View>
+
+          <View style={styles.infoRow}>
+            <MaterialIcons name="location-city" size={24} color="#4F4F4F" style={styles.icon} />
+            <Text style={styles.infoLabel}>Atende em:</Text>
+            <Text style={styles.infoValue}>{professional.city || "Não informada"}</Text>
+          </View>
+
+          <View style={styles.infoRowVertical}>
+            <View style={styles.infoRowHeader}>
+              <MaterialIcons name="info-outline" size={24} color="#4F4F4F" style={styles.icon} />
+              <Text style={styles.infoLabel}>Sobre mim:</Text>
+            </View>
+            <Text style={[styles.infoValue, styles.bioText]}>
+              {professional.bio || "Nenhuma descrição adicional fornecida."}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recomendações</Text>
+          <View style={styles.infoRow}>
+            <FontAwesome name="star" size={24} color="#ffd700" style={styles.icon} />
+            <Text style={styles.infoLabel}>Total de Recomendações:</Text>
+            <Text style={styles.infoValue}>{recommendationCount}</Text>
+          </View>
+
+          {/* Lista de quem recomendou - agora em lista vertical */}
+          {recommenders.length > 0 ? (
+            <View style={{ marginTop: 10 }}>
+              <Text style={[styles.infoLabel, { marginBottom: 8 }]}>Quem recomendou:</Text>
+              {recommenders.map((item) => (
+                <TouchableOpacity
+                  key={item.userId || item.id}
+                  onPress={() => router.push({ pathname: "../friend-profile", params: { friendId: item.userId || item.id } })}
+                  style={styles.recommenderRow}
+                >
+                  <UserAvatar photoURL={item.photoURL} name={item.name} size={40} />
+                  <Text style={styles.recommenderName}>{item.name}</Text>
+                </TouchableOpacity>
               ))}
             </View>
           ) : (
-            <Text style={styles.infoValue}>Não informadas</Text>
+            <Text style={styles.infoValue}>Ainda não há recomendações.</Text>
           )}
         </View>
-
-        <View style={styles.infoRow}>
-          <MaterialIcons name="location-city" size={24} color="#4F4F4F" style={styles.icon} />
-          <Text style={styles.infoLabel}>Atende em:</Text>
-          <Text style={styles.infoValue}>{professional.city || "Não informada"}</Text>
-        </View>
-
-        <View style={styles.infoRowVertical}>
-          <View style={styles.infoRowHeader}>
-            <MaterialIcons name="info-outline" size={24} color="#4F4F4F" style={styles.icon} />
-            <Text style={styles.infoLabel}>Descrição:</Text>
-          </View>
-          <Text style={[styles.infoValue, styles.bioText]}>
-            {professional.bio || "Nenhuma descrição adicional fornecida."}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recomendações</Text>
-        <View style={styles.infoRow}>
-          <FontAwesome name="star" size={24} color="#ffd700" style={styles.icon} />
-          <Text style={styles.infoLabel}>Total de Recomendações:</Text>
-          <Text style={styles.infoValue}>{recommendationCount}</Text>
-        </View>
-      </View>
-
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -361,6 +395,19 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     backgroundColor: "#DC3545", // Vermelho para remover
+  },
+  recommenderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+  },
+  recommenderName: {
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#1d3f5d',
+    fontWeight: '600',
   },
 });
 

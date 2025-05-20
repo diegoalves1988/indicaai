@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../hooks/useAuth";
 import { getProfessionals } from "../services/professionalService";
@@ -77,43 +78,45 @@ const FriendProfileScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.profileHeader}>
-        <UserAvatar photoURL={friend.photoURL} name={friend.name} size={120} />
-        <Text style={styles.name}>{friend.name}</Text>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>E-mail:</Text>
-          <Text style={styles.infoValue}>{friend.email || "Não informado"}</Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.profileHeader}>
+          <UserAvatar photoURL={friend.photoURL} name={friend.name} size={120} />
+          <Text style={styles.name}>{friend.name}</Text>
         </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Cidade:</Text>
-          <Text style={styles.infoValue}>{friend.city || "Não informada"}</Text>
+
+        <View style={styles.section}>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>E-mail:</Text>
+            <Text style={styles.infoValue}>{friend.email || "Não informado"}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Cidade:</Text>
+            <Text style={styles.infoValue}>{friend.city || "Não informada"}</Text>
+          </View>
         </View>
-      </View>
 
-      <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveFriend}>
-        <Text style={styles.buttonText}>Remover Amigo</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveFriend}>
+          <Text style={styles.buttonText}>Remover Amigo</Text>
+        </TouchableOpacity>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Profissionais Recomendados</Text>
-        {recommendedProfessionals.length > 0 ? (
-          recommendedProfessionals.map((prof) => (
-            <View key={prof.id} style={styles.professionalItem}>
-              <Text style={styles.professionalName}>{prof.name}</Text>
-              <Text style={styles.professionalInfo}>
-                {prof.category} | {prof.city}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.infoValue}>Este amigo ainda não recomendou nenhum profissional.</Text>
-        )}
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Profissionais Recomendados</Text>
+          {recommendedProfessionals.length > 0 ? (
+            recommendedProfessionals.map((prof) => (
+              <View key={prof.id} style={styles.professionalItem}>
+                <Text style={styles.professionalName}>{prof.name}</Text>
+                <Text style={styles.professionalInfo}>
+                  {prof.category} | {prof.city}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.infoValue}>Este amigo ainda não recomendou nenhum profissional.</Text>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

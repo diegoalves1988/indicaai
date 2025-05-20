@@ -1,7 +1,9 @@
+import { deleteUser } from "firebase/auth";
 import {
   arrayRemove,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   getDoc, // Adicionado setDoc para createUserProfile
   getDocs,
@@ -11,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage"; // Adicionado para Firebase Storage
 import { db, storage } from "./firebase"; // Adicionado storage
+import { deleteProfessionalProfile } from "./professionalService";
 
 interface UserProfile {
   userId: string;
@@ -50,9 +53,12 @@ export async function updateUserProfile(userId: string, updatedData: Partial<Use
 // ✅ Upload da imagem de perfil para o Firebase Storage e retorna a URL de download
 export async function uploadProfileImage(userId: string, imageUri: string): Promise<string> {
   try {
+    console.log("[uploadProfileImage] userId:", userId);
+    console.log("[uploadProfileImage] imageUri:", imageUri);
     const response = await fetch(imageUri);
     const blob = await response.blob();
-    const storageRef = ref(storage, `profile_images/${userId}/profile.jpg`);
+    console.log("[uploadProfileImage] blob criado, tamanho:", blob.size);
+    const storageRef = ref(storage, `profile_pics/${userId}/profile.jpg`);
     
     // Deleta a imagem antiga, se existir, para evitar acúmulo de arquivos não utilizados
     try {
@@ -61,39 +67,37 @@ export async function uploadProfileImage(userId: string, imageUri: string): Prom
       console.log("Imagem de perfil antiga removida.");
     } catch (error: any) {
       if (error.code === 'storage/object-not-found') {
-        // Nenhuma imagem antiga para remover, o que é normal
         console.log("Nenhuma imagem de perfil antiga encontrada para remover.");
       } else {
-        // Outro erro ao tentar verificar/deletar a imagem antiga
         console.warn("Erro ao verificar/remover imagem de perfil antiga:", error);
       }
     }
 
     const uploadTask = uploadBytesResumable(storageRef, blob);
+    console.log("[uploadProfileImage] upload iniciado para:", storageRef.fullPath);
 
     return new Promise((resolve, reject) => {
       uploadTask.on(
         "state_changed",
         (snapshot) => {
-          // Progresso do upload (opcional)
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log("Upload está " + progress + "% concluído");
+          console.log(`[uploadProfileImage] Progresso: ${progress}%`);
         },
         (error) => {
-          console.error("Erro no upload da imagem de perfil:", error);
+          // Log detalhado do erro
+          console.error("Erro no upload da imagem de perfil:", error, error?.serverResponse);
           reject(error);
         },
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          console.log("Imagem de perfil enviada, URL:", downloadURL);
-          // Atualiza o photoURL no Firestore
+          console.log("[uploadProfileImage] Upload finalizado. URL:", downloadURL);
           await updateUserProfile(userId, { photoURL: downloadURL });
           resolve(downloadURL);
         }
       );
     });
   } catch (error) {
-    console.error("Erro ao preparar upload da imagem:", error);
+    console.error("[uploadProfileImage] Erro ao preparar upload da imagem:", error);
     throw error;
   }
 }
@@ -101,7 +105,7 @@ export async function uploadProfileImage(userId: string, imageUri: string): Prom
 // ✅ Remove a imagem de perfil do Firebase Storage e do Firestore
 export async function removeProfileImage(userId: string): Promise<void> {
   try {
-    const storageRef = ref(storage, `profile_images/${userId}/profile.jpg`);
+    const storageRef = ref(storage, `profile_pics/${userId}/profile.jpg`);
     // Deleta a imagem do Storage
     await deleteObject(storageRef);
     console.log("Imagem de perfil removida do Storage.");
@@ -206,5 +210,41 @@ export async function getSuggestedFriends(userId: string): Promise<UserProfile[]
       profile.id !== userId && // Corrigido para usar 'id' em vez de 'userId'
       !currentFriends.includes(profile.id) // Certifique-se de usar 'id' aqui também
     );
+}
+
+// Exclui completamente a conta do usuário, incluindo autenticação
+export async function deleteUserAccount(user: any) {
+  const userId = user.uid;
+  // 1. Remove perfil profissional se existir
+  await deleteProfessionalProfile(userId);
+
+  // 2. Remove usuário da lista de amigos e recomendações de outros usuários
+  const usersRef = collection(db, "users");
+  const usersSnap = await getDocs(usersRef);
+  for (const userDoc of usersSnap.docs) {
+    const data = userDoc.data();
+    // Remove da lista de amigos
+    if (data.friends && Array.isArray(data.friends)) {
+      if (data.friends.includes(userId)) {
+        await updateDoc(doc(db, "users", userDoc.id), {
+          friends: arrayRemove(userId),
+        });
+      }
+    }
+    // Remove da lista de recomendados
+    if (data.recommendedProfessionals && Array.isArray(data.recommendedProfessionals)) {
+      if (data.recommendedProfessionals.includes(userId)) {
+        await updateDoc(doc(db, "users", userDoc.id), {
+          recommendedProfessionals: arrayRemove(userId),
+        });
+      }
+    }
+  }
+
+  // 3. Remove documento do usuário
+  await deleteDoc(doc(db, "users", userId));
+
+  // 4. Remove autenticação do usuário
+  await deleteUser(user);
 }
 

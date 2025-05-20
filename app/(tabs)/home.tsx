@@ -59,8 +59,6 @@ const HomeScreen = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [suggestedFriends, setSuggestedFriends] = useState<SuggestedFriend[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-
-  const categories = ["Construção Civil", "Serviços Gerais"];
   const [topSpecialties, setTopSpecialties] = useState<string[]>([]);
 
   useEffect(() => {
@@ -189,18 +187,6 @@ const HomeScreen = () => {
       </View>
 
       <View style={styles.chipsContainer}>
-        {categories.map((cat) => (
-          <TouchableOpacity
-            key={cat}
-            style={[
-              styles.chip,
-              selectedCategory === cat && { backgroundColor: "#007AFF" }
-            ]}
-            onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-          >
-            <Text style={styles.chipText}>{cat}</Text>
-          </TouchableOpacity>
-        ))}
         {topSpecialties.map((s) => (
           <TouchableOpacity
             key={s}

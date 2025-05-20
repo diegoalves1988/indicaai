@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { doc, updateDoc } from "firebase/firestore";
+import { deleteUser, signOut } from "firebase/auth";
+import { arrayRemove, collection, deleteDoc, doc, getDocs, updateDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActionSheetIOS,
@@ -17,7 +18,7 @@ import {
 import MaskInput from "react-native-mask-input";
 import UserAvatar from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
-import { db } from "../../services/firebase";
+import { auth, db } from "../../services/firebase";
 import { deleteProfessionalProfile } from "../../services/professionalService";
 import { getUserProfile, removeProfileImage, updateUserProfile, uploadProfileImage } from "../../services/userService";
 
@@ -143,7 +144,7 @@ function UserProfileScreen() {
         Alert.alert("Permissão Necessária", "Precisamos de acesso à galeria para escolher uma foto.");
         return;
       }
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.7 });
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', allowsEditing: true, aspect: [1, 1], quality: 0.7 });
       if (!result.canceled && result.assets && result.assets.length > 0) {
         await processAndUploadImage(result.assets[0].uri);
       }
@@ -284,6 +285,63 @@ function UserProfileScreen() {
     );
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    Alert.alert(
+      "Excluir Conta",
+      "Tem certeza que deseja excluir sua conta? Todos os seus dados serão removidos e esta ação não pode ser desfeita.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // 1. Remove perfil profissional se existir
+              await deleteProfessionalProfile(user.uid);
+
+              // 2. Remove usuário da lista de amigos e recomendações de outros usuários
+              const usersRef = collection(db, "users");
+              const usersSnap = await getDocs(usersRef);
+              for (const userDoc of usersSnap.docs) {
+                const data = userDoc.data();
+                // Remove da lista de amigos
+                if (data.friends && Array.isArray(data.friends)) {
+                  if (data.friends.includes(user.uid)) {
+                    await updateDoc(doc(db, "users", userDoc.id), {
+                      friends: arrayRemove(user.uid),
+                    });
+                  }
+                }
+                // Remove da lista de recomendados
+                if (data.recommendedProfessionals && Array.isArray(data.recommendedProfessionals)) {
+                  if (data.recommendedProfessionals.includes(user.uid)) {
+                    await updateDoc(doc(db, "users", userDoc.id), {
+                      recommendedProfessionals: arrayRemove(user.uid),
+                    });
+                  }
+                }
+              }
+
+              // 3. Remove documento do usuário
+              await deleteDoc(doc(db, "users", user.uid));
+
+              // 4. Remove autenticação do usuário
+              await deleteUser(user);
+
+              // 5. Desloga e redireciona
+              await signOut(auth);
+              Alert.alert("Conta excluída", "Sua conta foi removida com sucesso.");
+              router.replace("/");
+            } catch (error: any) {
+              Alert.alert("Erro", error.message || "Não foi possível excluir a conta.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" /></View>;
   }
@@ -364,6 +422,13 @@ function UserProfileScreen() {
           </TouchableOpacity>
         </>
       )}
+
+      <TouchableOpacity
+        style={[styles.button, styles.deleteAccountButton]}
+        onPress={handleDeleteAccount}
+      >
+        <Text style={styles.buttonText}>Excluir Conta</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -443,6 +508,10 @@ const styles = StyleSheet.create({
   },
   professionalButton: {
     backgroundColor: "#1d3f5d",
+  },
+  deleteAccountButton: {
+    backgroundColor: "#DC3545",
+    marginTop: 20,
   },
 });
 
