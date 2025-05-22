@@ -13,6 +13,7 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import RatingComponent from "../components/RatingComponent";
 import UserAvatar from "../components/UserAvatar";
 import { useAuth } from "../hooks/useAuth";
 import {
@@ -20,6 +21,7 @@ import {
   recommendProfessional,
   removeRecommendation,
 } from "../services/professionalService";
+import { getProfessionalRatingStats } from "../services/ratingService";
 import { getUserProfile } from "../services/userService";
 
 const ProfessionalProfileScreen = () => {
@@ -32,6 +34,15 @@ const ProfessionalProfileScreen = () => {
   const [isRecommended, setIsRecommended] = useState(false);
   const [recommendationCount, setRecommendationCount] = useState(0);
   const [recommenders, setRecommenders] = useState<any[]>([]);
+  const [ratingStats, setRatingStats] = useState<{
+    totalRatings: number;
+    averageRating: number;
+    showRating: boolean;
+  }>({
+    totalRatings: 0,
+    averageRating: 0,
+    showRating: false
+  });
 
   const fetchProfessionalProfile = async () => {
     setLoading(true);
@@ -49,6 +60,14 @@ const ProfessionalProfileScreen = () => {
       const recommendedBy = professionalData?.recommendedBy || [];
       const userHasRecommended = user ? recommendedBy.includes(user.uid) : false;
       setIsRecommended(userHasRecommended);
+
+      // Buscar estatísticas de avaliação
+      try {
+        const stats = await getProfessionalRatingStats(id.toString());
+        setRatingStats(stats);
+      } catch (error) {
+        console.error("Erro ao buscar estatísticas de avaliação:", error);
+      }
 
       // Buscar perfis de quem recomendou
       if (recommendedBy.length > 0) {
@@ -140,6 +159,19 @@ const ProfessionalProfileScreen = () => {
     }
   };
 
+  const handleRatingSubmitted = () => {
+    // Recarregar as estatísticas de avaliação após uma nova avaliação
+    if (id) {
+      getProfessionalRatingStats(id.toString())
+        .then(stats => {
+          setRatingStats(stats);
+        })
+        .catch(error => {
+          console.error("Erro ao atualizar estatísticas de avaliação:", error);
+        });
+    }
+  };
+
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" color="#007AFF" /></View>;
   }
@@ -161,6 +193,18 @@ const ProfessionalProfileScreen = () => {
             size={120}
           />
           <Text style={styles.name}>{professionalName}</Text>
+          
+          {/* Componente de Avaliação */}
+          {user && user.uid !== professional.userId && (
+            <RatingComponent
+              professionalId={id.toString()}
+              showRating={ratingStats.showRating}
+              averageRating={ratingStats.averageRating}
+              totalRatings={ratingStats.totalRatings}
+              onRatingSubmitted={handleRatingSubmitted}
+              size="large"
+            />
+          )}
         </View>
 
         <View style={styles.section}>
@@ -239,7 +283,7 @@ const ProfessionalProfileScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recomendações</Text>
           <View style={styles.infoRow}>
-            <FontAwesome name="star" size={24} color="#ffd700" style={styles.icon} />
+            <FontAwesome name="thumbs-up" size={24} color="#1976D2" style={styles.icon} />
             <Text style={styles.infoLabel}>Total de Recomendações:</Text>
             <Text style={styles.infoValue}>{recommendationCount}</Text>
           </View>
@@ -412,4 +456,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfessionalProfileScreen;
-
