@@ -22,7 +22,7 @@ import {
   removeRecommendation,
 } from "../services/professionalService";
 import { getProfessionalRatingStats } from "../services/ratingService";
-import { getUserProfile, sendRecommendationNotification } from "../services/userService";
+import { addFavorite, getFavorites, getUserProfile, removeFavorite, sendRecommendationNotification } from "../services/userService";
 
 const ProfessionalProfileScreen = () => {
   const { id } = useLocalSearchParams();
@@ -43,6 +43,7 @@ const ProfessionalProfileScreen = () => {
     averageRating: 0,
     showRating: false
   });
+  const [isFavorited, setIsFavorited] = useState(false);
 
   const fetchProfessionalProfile = async () => {
     setLoading(true);
@@ -91,6 +92,14 @@ const ProfessionalProfileScreen = () => {
 
   useEffect(() => {
     fetchProfessionalProfile();
+    // Verifica se o profissional está nos favoritos do usuário
+    const checkFavorite = async () => {
+      if (user && id) {
+        const favorites = await getFavorites(user.uid);
+        setIsFavorited(favorites.includes(id.toString()));
+      }
+    };
+    checkFavorite();
   }, [id, user]);
 
   const handleEditProfile = () => {
@@ -180,6 +189,21 @@ const ProfessionalProfileScreen = () => {
     }
   };
 
+  const handleToggleFavorite = async () => {
+    if (!user || !id) return;
+    try {
+      if (isFavorited) {
+        await removeFavorite(user.uid, id.toString());
+        setIsFavorited(false);
+      } else {
+        await addFavorite(user.uid, id.toString());
+        setIsFavorited(true);
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível atualizar seus favoritos.");
+    }
+  };
+
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" color="#007AFF" /></View>;
   }
@@ -202,6 +226,20 @@ const ProfessionalProfileScreen = () => {
           />
           <Text style={styles.name}>{professionalName}</Text>
           
+          {/* Botão de Favoritar */}
+          {user && user.uid !== professional.userId && (
+            <TouchableOpacity onPress={handleToggleFavorite} style={{ marginTop: 8, alignSelf: 'center' }}>
+              <FontAwesome
+                name={isFavorited ? "heart" : "heart-o"}
+                size={32}
+                color={isFavorited ? "#e53935" : "#888"}
+              />
+              <Text style={{ color: isFavorited ? "#e53935" : "#888", fontSize: 12, textAlign: 'center' }}>
+                {isFavorited ? "Favorito" : "Favoritar"}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Componente de Avaliação */}
           {user && user.uid !== professional.userId && (
             <RatingComponent

@@ -1,23 +1,23 @@
 import { useRouter } from "expo-router";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Modal,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import UserAvatar from "../../components/UserAvatar"; // Importar UserAvatar
 import { useAuth } from "../../hooks/useAuth";
 import { db } from "../../services/firebase";
 import { removeRecommendation } from "../../services/professionalService";
-import { getUserProfile } from "../../services/userService"; // Importar para buscar dados do usuário
+import { getFavorites, getUserProfile } from "../../services/userService"; // Importar para buscar dados do usuário
 
 interface Professional {
   id: string;
@@ -34,6 +34,7 @@ const RecommendedProfessionalsScreen = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [favoriteProfessionals, setFavoriteProfessionals] = useState<Professional[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
 
@@ -53,7 +54,7 @@ const RecommendedProfessionalsScreen = () => {
         }));
 
         const recommended = allProfessionals.filter((p) =>
-          p.recommendedBy?.includes(user.uid)
+          (p as any).recommendedBy?.includes(user.uid)
         );
 
         // Buscar detalhes do usuário para cada profissional recomendado
@@ -81,7 +82,28 @@ const RecommendedProfessionalsScreen = () => {
       }
     );
 
-    return () => unsubscribe();
+    // Buscar favoritos do usuário
+    const fetchFavorites = async () => {
+      const favoriteIds = await getFavorites(user.uid);
+      if (favoriteIds.length > 0) {
+        // Buscar todos os profissionais e filtrar pelos IDs favoritos
+        const professionalsRef = collection(db, "professionals");
+        const snapshot = await getDocs(professionalsRef);
+        const allProfessionals = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Professional, "id">),
+        }));
+        const favorites = allProfessionals.filter((p) => favoriteIds.includes(p.id));
+        setFavoriteProfessionals(favorites);
+      } else {
+        setFavoriteProfessionals([]);
+      }
+    };
+    fetchFavorites();
+
+    return () => {
+      unsubscribe();
+    };
   }, [user?.uid]);
 
   const confirmRemoveRecommendation = (professional: Professional) => {
@@ -157,6 +179,32 @@ const RecommendedProfessionalsScreen = () => {
           contentContainerStyle={styles.listContent}
         />
       )}
+      <Text style={[styles.title, { marginTop: 30 }]}>Seus Favoritos</Text>
+      {favoriteProfessionals.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Você ainda não favoritou nenhum profissional.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={favoriteProfessionals}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.professionalItemContainer}>
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "/professional-profile", params: { id: item.id } })}
+                style={styles.professionalDetailsTouchable}
+              >
+                <UserAvatar photoURL={item.photoURL} name={item.name} size={50} />
+                <View style={styles.professionalInfoContainer}>
+                  <Text style={styles.professionalName}>{item.name}</Text>
+                  <Text style={styles.professionalInfoText}>{item.category} | {item.city}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
       {/* Botão Voltar pode ser desnecessário se a navegação por abas/stack estiver clara */}
       {/* <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>Voltar</Text>
@@ -167,7 +215,7 @@ const RecommendedProfessionalsScreen = () => {
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.centeredView}>
+        <View style={styles.centered}>
           <View style={styles.modalView}>
             <Text style={styles.modalText}>
               Tem certeza que deseja remover sua indicação para {selectedProfessional?.name}?
