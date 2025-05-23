@@ -1,6 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { getUserRatingForProfessional, submitRating } from '../services/ratingService';
 
@@ -80,71 +80,6 @@ const RatingComponent: React.FC<RatingComponentProps> = ({
     }
   };
 
-  // Renderiza o modal de avaliação
-  const renderRatingModal = () => {
-    if (!showRatingModal) return null;
-
-    return (
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Avaliar Profissional</Text>
-          
-          <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity
-                key={star}
-                onPress={() => setTempRating(star)}
-                disabled={isSubmitting}
-              >
-                <FontAwesome
-                  name={tempRating !== null && star <= tempRating ? "star" : "star-o"}
-                  size={36}
-                  color={tempRating !== null && star <= tempRating ? "#FFD700" : "#D1D5DB"}
-                  style={styles.modalStarIcon}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          <Text style={styles.ratingText}>
-            {tempRating === 1 && "Ruim"}
-            {tempRating === 2 && "Regular"}
-            {tempRating === 3 && "Bom"}
-            {tempRating === 4 && "Muito Bom"}
-            {tempRating === 5 && "Excelente"}
-          </Text>
-          
-          <View style={styles.modalButtons}>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
-              onPress={() => {
-                setShowRatingModal(false);
-                setTempRating(null);
-              }}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.modalButton, 
-                styles.submitButton,
-                (!tempRating || isSubmitting) && styles.disabledButton
-              ]}
-              onPress={() => tempRating && handleSubmitRating(tempRating)}
-              disabled={!tempRating || isSubmitting}
-            >
-              <Text style={styles.submitButtonText}>
-                {isSubmitting ? "Enviando..." : "Enviar Avaliação"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
   return (
     <View style={styles.container}>
       {/* Exibição da média de avaliações (se houver pelo menos 10) */}
@@ -182,6 +117,24 @@ const RatingComponent: React.FC<RatingComponentProps> = ({
         </Text>
       )}
       
+      {/* Exibição da avaliação do usuário atual */}
+      {userRating !== null && (
+        <View style={styles.userRatingContainer}>
+          <Text style={styles.userRatingText}>Sua avaliação:</Text>
+          <View style={styles.starsContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <FontAwesome
+                key={star}
+                name="star"
+                size={16}
+                color={star <= userRating ? "#FFD700" : "#D1D5DB"}
+                style={styles.starIcon}
+              />
+            ))}
+          </View>
+        </View>
+      )}
+      
       {/* Botão para avaliar */}
       <TouchableOpacity
         style={styles.rateButton}
@@ -195,8 +148,75 @@ const RatingComponent: React.FC<RatingComponentProps> = ({
         </Text>
       </TouchableOpacity>
       
-      {/* Modal de avaliação */}
-      {renderRatingModal()}
+      {/* Modal de avaliação usando o componente Modal nativo */}
+      <Modal
+        visible={showRatingModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowRatingModal(false);
+          setTempRating(null);
+        }}
+      >
+        <SafeAreaView style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Avaliar Profissional</Text>
+            
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  onPress={() => setTempRating(star)}
+                  disabled={isSubmitting}
+                >
+                  <FontAwesome
+                    name={tempRating !== null && star <= tempRating ? "star" : "star-o"}
+                    size={36}
+                    color={tempRating !== null && star <= tempRating ? "#FFD700" : "#D1D5DB"}
+                    style={styles.modalStarIcon}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            
+            <Text style={styles.ratingText}>
+              {tempRating === 1 && "Ruim"}
+              {tempRating === 2 && "Regular"}
+              {tempRating === 3 && "Bom"}
+              {tempRating === 4 && "Muito Bom"}
+              {tempRating === 5 && "Excelente"}
+              {tempRating === null && " "}
+            </Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setShowRatingModal(false);
+                  setTempRating(null);
+                }}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.modalButton, 
+                  styles.submitButton,
+                  (!tempRating || isSubmitting) && styles.disabledButton
+                ]}
+                onPress={() => tempRating && handleSubmitRating(tempRating)}
+                disabled={!tempRating || isSubmitting}
+              >
+                <Text style={styles.submitButtonText}>
+                  {isSubmitting ? "Enviando..." : "Enviar Avaliação"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 };
@@ -235,12 +255,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
+  userRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  userRatingText: {
+    fontSize: 14,
+    color: '#4B5563',
+    marginRight: 6,
+  },
   rateButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: '#1976D2',
     borderRadius: 20,
-    marginTop: 8,
+    marginTop: 4,
   },
   rateButtonText: {
     color: '#FFFFFF',
@@ -248,15 +282,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
   },
   modalContent: {
     backgroundColor: '#FFFFFF',

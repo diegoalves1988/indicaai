@@ -22,7 +22,7 @@ import {
   removeRecommendation,
 } from "../services/professionalService";
 import { getProfessionalRatingStats } from "../services/ratingService";
-import { getUserProfile } from "../services/userService";
+import { getUserProfile, sendRecommendationNotification } from "../services/userService";
 
 const ProfessionalProfileScreen = () => {
   const { id } = useLocalSearchParams();
@@ -101,6 +101,14 @@ const ProfessionalProfileScreen = () => {
     if (!professional || !user) return;
     try {
       await recommendProfessional(id.toString(), user.uid);
+      // Notifica o profissional recomendado
+      if (professional.userId) {
+        await sendRecommendationNotification({
+          toUserId: professional.userId,
+          fromUserId: user.uid,
+          professionalId: id.toString(),
+        });
+      }
       Alert.alert("Sucesso", "Recomendação adicionada!");
       setIsRecommended(true);
       setRecommendationCount(prev => prev + 1);

@@ -1,5 +1,6 @@
 import { deleteUser } from "firebase/auth";
 import {
+  addDoc,
   arrayRemove,
   arrayUnion,
   collection,
@@ -7,9 +8,10 @@ import {
   doc,
   getDoc, // Adicionado setDoc para createUserProfile
   getDocs,
+  serverTimestamp,
   setDoc,
   updateDoc,
-  writeBatch
+  writeBatch,
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage"; // Adicionado para Firebase Storage
 import { db, storage } from "./firebase"; // Adicionado storage
@@ -29,6 +31,7 @@ interface UserProfile {
   };
   friends?: string[];
   professionalProfile?: boolean; // Adicionado para consistência com user-profile.tsx
+  favorites?: string[]; // Adicionado para favoritos
 }
 
 // ✅ Cria um novo perfil de usuário no Firestore
@@ -40,6 +43,7 @@ export async function createUserProfile(user: UserProfile) {
       photoURL: user.photoURL || null, // Garante que photoURL seja null se não fornecido
       friends: [], // Inicializa a lista de amigos vazia
       professionalProfile: user.professionalProfile || false, // Garante valor default
+      favorites: [], // Inicializa a lista de favoritos vazia
     });
   }
 
@@ -212,6 +216,26 @@ export async function getSuggestedFriends(userId: string): Promise<UserProfile[]
     );
 }
 
+// Envia notificação de recomendação para o profissional recomendado
+export async function sendRecommendationNotification({
+  toUserId,
+  fromUserId,
+  professionalId,
+}: {
+  toUserId: string;
+  fromUserId: string;
+  professionalId: string;
+}) {
+  await addDoc(collection(db, "notifications"), {
+    toUserId,
+    fromUserId,
+    professionalId,
+    type: "recommendation",
+    createdAt: serverTimestamp(),
+    read: false,
+  });
+}
+
 // Exclui completamente a conta do usuário, incluindo autenticação
 export async function deleteUserAccount(user: any) {
   const userId = user.uid;
@@ -246,5 +270,25 @@ export async function deleteUserAccount(user: any) {
 
   // 4. Remove autenticação do usuário
   await deleteUser(user);
+}
+
+// ✅ Adiciona um profissional aos favoritos do usuário
+export async function addFavorite(userId: string, professionalId: string) {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, { favorites: arrayUnion(professionalId) });
+  console.log(`Profissional ${professionalId} adicionado aos favoritos de ${userId}`);
+}
+
+// ✅ Remove um profissional dos favoritos do usuário
+export async function removeFavorite(userId: string, professionalId: string) {
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, { favorites: arrayRemove(professionalId) });
+  console.log(`Profissional ${professionalId} removido dos favoritos de ${userId}`);
+}
+
+// ✅ Obtém a lista de IDs de profissionais favoritados pelo usuário
+export async function getFavorites(userId: string): Promise<string[]> {
+  const userProfile = await getUserProfile(userId);
+  return userProfile?.favorites || [];
 }
 
