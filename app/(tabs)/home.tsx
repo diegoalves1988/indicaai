@@ -1,6 +1,6 @@
 // HomeScreen.tsx reformulado com redirecionamento ao fazer logout, chips, busca, sugestões de amigos e lista de profissionais
 
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -25,9 +25,12 @@ import {
   getProfessionals
 } from "../../services/professionalService";
 import {
+  addFavorite,
   addFriend,
+  getFavorites,
   getSuggestedFriends,
   getUserProfile,
+  removeFavorite
 } from "../../services/userService";
 
 interface Professional {
@@ -78,6 +81,8 @@ const HomeScreen = () => {
     specialties: [],
     maxDistance: null
   });
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   // Redirecionar para login se não estiver autenticado
   useEffect(() => {
@@ -255,58 +260,102 @@ const HomeScreen = () => {
     fetchData();
   }, [router, fetchData]);
 
+  // Carrega favoritos do usuário ao montar
+  useEffect(() => {
+    if (!user?.uid) return;
+    const fetchFavorites = async () => {
+      const favs = await getFavorites(user.uid);
+      setFavoriteIds(favs);
+    };
+    fetchFavorites();
+  }, [user?.uid]);
+
+  // Função para alternar favorito
+  const handleToggleFavorite = async (professionalId: string) => {
+    if (!user?.uid) return;
+    setFavoriteLoading(true);
+    try {
+      if (favoriteIds.includes(professionalId)) {
+        await removeFavorite(user.uid, professionalId);
+        setFavoriteIds((prev) => prev.filter((id) => id !== professionalId));
+      } else {
+        await addFavorite(user.uid, professionalId);
+        setFavoriteIds((prev) => [...prev, professionalId]);
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível atualizar seus favoritos.");
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
   // Renderizar um profissional na lista
   const renderProfessional = useCallback(({ item }: { item: Professional }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push({ pathname: "/professional-profile", params: { id: item.id } })}
-    >
-      <UserAvatar photoURL={item.photoURL} name={item.name} size={64} />
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.role}>{Array.isArray(item.specialty) ? item.specialty[0] : item.specialty}</Text>
-      <Text style={styles.city}>{item.city}</Text>
+    <View style={styles.card}>
+      <TouchableOpacity
+        onPress={() => router.push({ pathname: "/professional-profile", params: { id: item.id } })}
+        style={{ flex: 1 }}
+      >
+        <UserAvatar photoURL={item.photoURL} name={item.name} size={64} />
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.role}>{Array.isArray(item.specialty) ? item.specialty[0] : item.specialty}</Text>
+        <Text style={styles.city}>{item.city}</Text>
 
-      {/* Exibe avaliação se tiver mais de 10 avaliações */}
-      {item.showRating && item.averageRating !== undefined ? (
-        <View style={styles.ratingRow}>
-          <View style={styles.starsContainer}>
-            {[...Array(5)].map((_, i) => (
-              <Ionicons
-                key={i}
-                name="star"
-                size={14}
-                color={i < Math.floor(item.averageRating!) ? "#FFD700" : "#D1D5DB"}
-                style={styles.starIcon}
-              />
-            ))}
-            {item.averageRating % 1 !== 0 && (
-              <Ionicons
-                name="star-half"
-                size={14}
-                color="#FFD700"
-                style={[styles.starIcon, { marginLeft: -14 }]}
-              />
-            )}
+        {/* Exibe avaliação se tiver mais de 10 avaliações */}
+        {item.showRating && item.averageRating !== undefined ? (
+          <View style={styles.ratingRow}>
+            <View style={styles.starsContainer}>
+              {[...Array(5)].map((_, i) => (
+                <Ionicons
+                  key={i}
+                  name="star"
+                  size={14}
+                  color={i < Math.floor(item.averageRating!) ? "#FFD700" : "#D1D5DB"}
+                  style={styles.starIcon}
+                />
+              ))}
+              {item.averageRating % 1 !== 0 && (
+                <Ionicons
+                  name="star-half"
+                  size={14}
+                  color="#FFD700"
+                  style={[styles.starIcon, { marginLeft: -14 }]}
+                />
+              )}
+            </View>
+            <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
           </View>
-          <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
+        ) : null}
+
+        <View style={styles.recommendationRow}>
+          {item.recommendationCount && item.recommendationCount > 0 && (
+            <Ionicons name="thumbs-up" size={16} color="#1976D2" />
+          )}
+          <Text style={styles.recommendationText}>
+            {item.recommendationCount === 0 || item.recommendationCount === undefined
+              ? "Nenhuma recomendação"
+              : item.recommendationCount === 1
+                ? "1 recomendação"
+                : `${item.recommendationCount} recomendações`}
+          </Text>
         </View>
-      ) : null}
+      </TouchableOpacity>
 
-      <View style={styles.recommendationRow}>
-        {item.recommendationCount > 0 && (
-          <Ionicons name="thumbs-up" size={16} color="#1976D2" />
-        )}
-        <Text style={styles.recommendationText}>
-          {item.recommendationCount === 0
-            ? "Nenhuma recomendação"
-            : item.recommendationCount === 1
-              ? "1 recomendação"
-              : `${item.recommendationCount} recomendações`}
-        </Text>
-      </View>
-
-    </TouchableOpacity>
-  ), [router]);
+      {/* Botão de favorito no card */}
+      <TouchableOpacity
+        onPress={() => handleToggleFavorite(item.id)}
+        style={{ position: "absolute", top: 10, right: 10, zIndex: 2 }}
+        disabled={favoriteLoading}
+        accessibilityLabel={favoriteIds.includes(item.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+      >
+        <FontAwesome
+          name={favoriteIds.includes(item.id) ? "heart" : "heart-o"}
+          size={18}
+          color={favoriteIds.includes(item.id) ? "#e53935" : "#888"}
+        />
+      </TouchableOpacity>
+    </View>
+  ), [router, favoriteIds, favoriteLoading]);
 
   // Verifica se há filtros ativos
   const hasActiveFilters = activeFilters.minRating !== null ||

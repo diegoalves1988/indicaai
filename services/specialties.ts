@@ -100,3 +100,4 @@ const specialties = [
 ];
 
 export default specialties;
+
