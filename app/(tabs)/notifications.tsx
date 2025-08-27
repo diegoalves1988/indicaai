@@ -51,8 +51,9 @@ export default function NotificationsScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: Notification }) => {
+  const NotificationItem = ({ item }: { item: Notification }) => {
     const [fromUser, setFromUser] = useState<any>(null);
+
     useEffect(() => {
       let mounted = true;
       getUserProfile(item.fromUserId).then((profile) => {
@@ -82,6 +83,10 @@ export default function NotificationsScreen() {
       </TouchableOpacity>
     );
   };
+
+  const renderItem = ({ item }: { item: Notification }) => (
+    <NotificationItem item={item} />
+  );
 
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" color="#1976D2" /></View>;
