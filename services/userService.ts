@@ -209,10 +209,10 @@ export async function getSuggestedFriends(userId: string): Promise<UserProfile[]
 
   const querySnapshot = await getDocs(usersRef);
   return querySnapshot.docs
-    .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-    .filter(profile => 
-      profile.id !== userId && // Corrigido para usar 'id' em vez de 'userId'
-      !currentFriends.includes(profile.id) // Certifique-se de usar 'id' aqui também
+    .map(doc => ({ userId: doc.id, ...doc.data() } as UserProfile))
+    .filter(profile =>
+      profile.userId !== userId &&
+      !currentFriends.includes(profile.userId)
     );
 }
 

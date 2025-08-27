@@ -49,7 +49,7 @@ interface Professional {
 }
 
 interface SuggestedFriend {
-  id: string;
+  userId: string;
   name?: string;
   photoURL?: string | null;
 }
@@ -455,18 +455,18 @@ const HomeScreen = () => {
           <FlatList
             data={suggestedFriends}
             horizontal
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.userId}
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
               <TouchableOpacity
-                onPress={() => router.push({ pathname: "../friend-profile", params: { friendId: item.id } })}
+                onPress={() => router.push({ pathname: "../friend-profile", params: { friendId: item.userId } })}
                 style={{ marginHorizontal: 10, alignItems: "center" }}
               >
                 <UserAvatar photoURL={item.photoURL} name={item.name} size={60} />
                 <Text numberOfLines={1} style={{ maxWidth: 100 }}>{item.name}</Text>
                 <TouchableOpacity
                   onPress={async () => {
-                    await addFriend(user!.uid, item.id);
+                    await addFriend(user!.uid, item.userId);
                     const updated = await getSuggestedFriends(user!.uid);
                     setSuggestedFriends(updated);
                     Alert.alert("Amigo adicionado!", "Vocês agora estão conectados.");
