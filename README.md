@@ -27,7 +27,9 @@
 
 [Detalhes do escopo](/docs/scope.md)  
 
-## 🚀 Como Usar  
-1. Clone o repositório:  
+## 🚀 Como Usar
+1. Clone o repositório:
    ```bash
-   git clone https://github.com/diegoalves1988/service-recommendation-app
+   git clone https://github.com/diegoalves1988/indicaai
+   ```
+
