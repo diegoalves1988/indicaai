@@ -11,6 +11,8 @@ import {
     where
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { calculateRatingStats, ProfessionalRatingStats } from './ratingUtils';
+export type { ProfessionalRatingStats } from './ratingUtils';
 
 // Interfaces
 export interface Rating {
@@ -21,16 +23,9 @@ export interface Rating {
   timestamp: Timestamp;
 }
 
-export interface ProfessionalRatingStats {
-  totalRatings: number;
-  averageRating: number;
-  showRating: boolean; // true se totalRatings >= 10
-}
-
 // Constantes
 const RATINGS_COLLECTION = 'ratings';
 const PROFESSIONALS_COLLECTION = 'professionals';
-const MIN_RATINGS_TO_SHOW = 10;
 
 /**
  * Submete uma avaliação para um profissional
@@ -98,24 +93,12 @@ export const updateProfessionalRatingStats = async (professionalId: string): Pro
     const q = query(ratingsRef, where('professionalId', '==', professionalId));
     const querySnapshot = await getDocs(q);
     
-    const totalRatings = querySnapshot.size;
-    let sum = 0;
-    
-    querySnapshot.forEach(doc => {
-      const ratingData = doc.data();
-      sum += ratingData.rating;
-    });
-    
-    const averageRating = totalRatings > 0 ? sum / totalRatings : 0;
-    const showRating = totalRatings >= MIN_RATINGS_TO_SHOW;
-    
+    const ratings = querySnapshot.docs.map(r => r.data().rating);
+    const stats = calculateRatingStats(ratings);
+
     // Atualizar o perfil do profissional
     const professionalRef = doc(db, PROFESSIONALS_COLLECTION, professionalId);
-    await updateDoc(professionalRef, {
-      totalRatings,
-      averageRating,
-      showRating
-    });
+    await updateDoc(professionalRef, stats as any);
     
     return;
   } catch (error) {
