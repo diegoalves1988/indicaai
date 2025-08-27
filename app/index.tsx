@@ -1,6 +1,12 @@
 import { FontAwesome } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
@@ -15,10 +21,15 @@ import {
 } from "react-native";
 import { auth, db } from "../services/firebase";
 
+WebBrowser.maybeCompleteAuthSession();
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const [, , promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string,
+  });
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -41,6 +52,32 @@ export default function Login() {
     } catch (error) {
       console.error("Erro ao fazer login:", error);
       Alert.alert("Erro", "Email ou senha incorretos. Por favor, tente novamente.");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await promptAsync();
+      if (result?.type !== "success" || !result.params?.id_token) {
+        Alert.alert("Erro", "Login com Google cancelado.");
+        return;
+      }
+
+      const credential = GoogleAuthProvider.credential(result.params.id_token);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists() && userSnap.data().profileComplete) {
+        router.replace("/(tabs)/home");
+      } else {
+        router.replace("/complete-profile");
+      }
+    } catch (error) {
+      console.error("Erro ao fazer login com Google:", error);
+      Alert.alert("Erro", "Não foi possível entrar com Google.");
     }
   };
 
@@ -77,7 +114,7 @@ export default function Login() {
 
         <TouchableOpacity
           style={[styles.button, styles.googleButton]}
-          onPress={() => Alert.alert("Em breve", "Login com Google em manutenção. Por favor, use email e senha por enquanto.")}
+          onPress={handleGoogleLogin}
         >
           <FontAwesome name="google" size={20} style={styles.icon} />
           <Text style={styles.googleButtonText}>Entrar com Google</Text>
