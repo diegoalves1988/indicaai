@@ -3,8 +3,8 @@ import { initializeApp } from "firebase/app";
 import {
   getAuth,
   getReactNativePersistence,
-  GoogleAuthProvider,
-  initializeAuth, // Import GoogleAuthProvider
+  GoogleAuthProvider, // Import GoogleAuthProvider
+  initializeAuth, // Import initializeAuth
   sendEmailVerification, // Import sendEmailVerification
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
