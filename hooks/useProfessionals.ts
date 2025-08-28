@@ -35,22 +35,26 @@ export const useProfessionals = () => {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoadingData(true);
-        const [professionalsList, favorites] = await Promise.all([
-          getProfessionals(),
+        const [profResult, favorites] = await Promise.all([
+          getProfessionals(PAGE_SIZE),
           user ? getFavorites(user.uid) : [],
         ]);
 
-        setProfessionals(professionalsList);
-        setFilteredProfessionals(professionalsList);
+        setProfessionals(profResult.professionals);
+        setFilteredProfessionals(profResult.professionals);
+        setLastDoc(profResult.lastDoc);
         setFavoriteIds(favorites);
 
         const specialtyCount: Record<string, number> = {};
-        professionalsList.forEach((p) => {
+        profResult.professionals.forEach((p) => {
           const specs = Array.isArray(p.specialty) ? p.specialty : p.specialty ? [p.specialty] : [];
           specs.forEach((s) => {
             specialtyCount[s] = (specialtyCount[s] || 0) + 1;
@@ -67,6 +71,33 @@ export const useProfessionals = () => {
     };
     load();
   }, [user]);
+
+  const loadMoreProfessionals = useCallback(async () => {
+    if (loadingMore || !lastDoc) return;
+    setLoadingMore(true);
+    try {
+      const result = await getProfessionals(PAGE_SIZE, lastDoc);
+      setProfessionals((prev) => {
+        const updated = [...prev, ...result.professionals];
+        const specialtyCount: Record<string, number> = {};
+        updated.forEach((p) => {
+          const specs = Array.isArray(p.specialty) ? p.specialty : p.specialty ? [p.specialty] : [];
+          specs.forEach((s) => {
+            specialtyCount[s] = (specialtyCount[s] || 0) + 1;
+          });
+        });
+        setTopSpecialties(
+          Object.keys(specialtyCount)
+            .sort((a, b) => specialtyCount[b] - specialtyCount[a])
+            .slice(0, 5)
+        );
+        return updated;
+      });
+      setLastDoc(result.lastDoc);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, lastDoc]);
 
   const toggleFavorite = useCallback(async (id: string) => {
     if (!user) return;
@@ -118,6 +149,9 @@ export const useProfessionals = () => {
     favoriteLoading,
     toggleFavorite,
     loadingData,
+    loadMoreProfessionals,
+    hasMore: !!lastDoc,
+    loadingMore,
   };
 };
 

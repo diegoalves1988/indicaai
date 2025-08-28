@@ -1,4 +1,4 @@
-import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, increment, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, increment, query, updateDoc, where, orderBy, limit as limitQuery, startAfter as startAfterQuery } from "firebase/firestore";
 import { db } from "./firebase";
 
 interface Professional {
@@ -27,17 +27,41 @@ export async function registerProfessional(professional: Professional) {
   }
 }
 
-// ✅ Busca todos os profissionais cadastrados
-export const getProfessionals = async () => {
+// ✅ Busca profissionais com paginação
+export const getProfessionals = async (
+  limitNumber = 10,
+  startAfterDoc: any = null
+) => {
   try {
     const professionalsRef = collection(db, "professionals");
-    const querySnapshot = await getDocs(professionalsRef);
+    let q = query(
+      professionalsRef,
+      orderBy("name"),
+      limitQuery(limitNumber)
+    );
+
+    if (startAfterDoc) {
+      q = query(
+        professionalsRef,
+        orderBy("name"),
+        startAfterQuery(startAfterDoc),
+        limitQuery(limitNumber)
+      );
+    }
+
+    const querySnapshot = await getDocs(q);
 
     const professionals: Professional[] = [];
     querySnapshot.forEach((doc) => {
       professionals.push({ id: doc.id, ...doc.data() } as Professional);
     });
-    return professionals;
+
+    const lastDoc =
+      querySnapshot.docs.length < limitNumber
+        ? null
+        : querySnapshot.docs[querySnapshot.docs.length - 1];
+
+    return { professionals, lastDoc };
   } catch (error) {
     console.error("Erro ao buscar profissionais:", error);
     throw error;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
 
@@ -35,6 +35,9 @@ const HomeScreen = () => {
     favoriteLoading,
     toggleFavorite,
     loadingData,
+    loadMoreProfessionals,
+    hasMore,
+    loadingMore,
   } = useProfessionals();
 
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
@@ -86,6 +89,13 @@ const HomeScreen = () => {
     router.push({ pathname: '/professional-profile', params: { id } });
   };
 
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 20) {
+      loadMoreProfessionals();
+    }
+  };
+
   if (authLoading || loadingData) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -95,7 +105,12 @@ const HomeScreen = () => {
   }
 
   return (
-    <ScrollView style={styles.wrapper} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView
+      style={styles.wrapper}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+    >
       <HomeHeader
         userName={userData?.name}
         photoURL={userData?.photoURL}
@@ -119,6 +134,20 @@ const HomeScreen = () => {
         onToggleFavorite={toggleFavorite}
         onPressProfessional={handlePressProfessional}
       />
+
+      {hasMore && (
+        <TouchableOpacity
+          style={styles.loadMoreButton}
+          onPress={loadMoreProfessionals}
+          disabled={loadingMore}
+        >
+          {loadingMore ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={styles.loadMoreText}>Carregar mais</Text>
+          )}
+        </TouchableOpacity>
+      )}
 
       <FriendsSuggestions friends={suggestedFriends} onAddFriend={handleAddFriend} />
 
@@ -159,6 +188,20 @@ const styles = StyleSheet.create({
     color: '#1d3f5d',
     fontWeight: 'bold',
     borderRadius: 18,
+  },
+  loadMoreButton: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#1d3f5d',
+    alignItems: 'center',
+  },
+  loadMoreText: {
+    color: '#1d3f5d',
+    fontWeight: 'bold',
   },
 });
 
