@@ -8,7 +8,9 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import React, { useState } from "react";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as yup from "yup";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -24,19 +26,52 @@ import { auth, db } from "../services/firebase";
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const router = useRouter();
+  const schema = yup.object({
+    email: yup
+      .string()
+      .email("E-mail inválido")
+      .required("E-mail é obrigatório"),
+    password: yup
+      .string()
+      .min(6, "Senha deve ter pelo menos 6 caracteres")
+      .required("Senha é obrigatória"),
+  });
+
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<{ email: string; password: string }>({
+    defaultValues: { email: "", password: "" },
+    resolver: async (data) => {
+      try {
+        const values = await schema.validate(data, { abortEarly: false });
+        return { values, errors: {} };
+      } catch (err) {
+        const validationError = err as yup.ValidationError;
+        const formErrors = validationError.inner.reduce<Record<string, any>>(
+          (allErrors, currentError) => {
+            return {
+              ...allErrors,
+              [currentError.path!]: {
+                type: currentError.type ?? "validation",
+                message: currentError.message,
+              },
+            };
+          },
+          {}
+        );
+        return { values: {}, errors: formErrors };
+      }
+    },
+  });
   const [, , promptAsync] = Google.useIdTokenAuthRequest({
     clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string,
   });
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Erro", "Preencha todos os campos.");
-      return;
-    }
-
+  const handleLogin = async ({ email, password }: { email: string; password: string }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -51,7 +86,9 @@ export default function Login() {
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
-      Alert.alert("Erro", "Email ou senha incorretos. Por favor, tente novamente.");
+      setError("password", {
+        message: "Email ou senha incorretos. Por favor, tente novamente.",
+      });
     }
   };
 
@@ -89,26 +126,46 @@ export default function Login() {
       <View style={styles.innerContainer}>
         <Text style={styles.title}>IndicaAi</Text>
         
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder="E-mail"
-          placeholderTextColor="#A0A0A0" // Cor do placeholder ajustada
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="E-mail"
+              placeholderTextColor="#A0A0A0"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={styles.input}
+            />
+          )}
         />
+        {errors.email && (
+          <Text style={styles.errorText}>{errors.email.message}</Text>
+        )}
 
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Senha"
-          placeholderTextColor="#A0A0A0" // Cor do placeholder ajustada
-          secureTextEntry
-          style={styles.input}
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              placeholder="Senha"
+              placeholderTextColor="#A0A0A0"
+              secureTextEntry
+              style={styles.input}
+            />
+          )}
         />
+        {errors.password && (
+          <Text style={styles.errorText}>{errors.password.message}</Text>
+        )}
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <TouchableOpacity style={styles.button} onPress={handleSubmit(handleLogin)}>
           <Text style={styles.buttonText}>Entrar</Text>
         </TouchableOpacity>
 
@@ -219,5 +276,10 @@ const styles = StyleSheet.create({
   separator: {
     marginHorizontal: 8,
     color: "#6B7280",
+  },
+  errorText: {
+    alignSelf: "flex-start",
+    color: "#f43f5e",
+    marginBottom: 8,
   },
 });
