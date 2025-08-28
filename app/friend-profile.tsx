@@ -25,7 +25,7 @@ const FriendProfileScreen = () => {
         setFriend(friendData);
 
         // Busca todos os profissionais
-        const professionals = await getProfessionals();
+        const { professionals } = await getProfessionals(100);
 
         // Filtra os profissionais recomendados pelo amigo
         const filteredProfessionals = professionals.filter(
