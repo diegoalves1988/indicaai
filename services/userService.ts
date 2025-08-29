@@ -12,6 +12,11 @@ import {
   setDoc,
   updateDoc,
   writeBatch,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAfter,
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage"; // Adicionado para Firebase Storage
 import { db, storage } from "./firebase"; // Adicionado storage
@@ -201,18 +206,35 @@ export async function getFriends(userId: string): Promise<{ id: string; name?: s
   return Promise.all(friendDetailsPromises);
 }
 
-// Obter lista de amigos sugeridos
-export async function getSuggestedFriends(userId: string): Promise<UserProfile[]> {
+// Obter lista de amigos sugeridos com paginação
+export async function getSuggestedFriends(
+  userId: string,
+  limitNumber = 10,
+  startAfterId?: string
+): Promise<UserProfile[]> {
   const usersRef = collection(db, "users");
   const currentUserProfile = await getUserProfile(userId);
   const currentFriends = currentUserProfile?.friends || [];
 
-  const querySnapshot = await getDocs(usersRef);
+  // Firestore "not-in" aceita no máximo 10 valores
+  const excludedIds = [userId, ...currentFriends].slice(0, 10);
+
+  let q = query(
+    usersRef,
+    where("userId", "not-in", excludedIds),
+    orderBy("userId"),
+    limit(limitNumber)
+  );
+  if (startAfterId) {
+    q = query(q, startAfter(startAfterId));
+  }
+
+  const querySnapshot = await getDocs(q);
   return querySnapshot.docs
-    .map(doc => ({ userId: doc.id, ...doc.data() } as UserProfile))
-    .filter(profile =>
-      profile.userId !== userId &&
-      !currentFriends.includes(profile.userId)
+    .map((doc) => ({ userId: doc.id, ...doc.data() } as UserProfile))
+    .filter(
+      (profile) =>
+        profile.userId !== userId && !currentFriends.includes(profile.userId)
     );
 }
 
