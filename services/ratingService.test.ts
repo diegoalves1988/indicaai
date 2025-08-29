@@ -1,6 +1,6 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { calculateRatingStats } = require('./ratingUtils');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { calculateRatingStats } from './ratingUtils.ts';
 
 test('showRating é falso com menos de 10 avaliações', () => {
   const stats = calculateRatingStats([5, 4, 3, 5, 4]);
