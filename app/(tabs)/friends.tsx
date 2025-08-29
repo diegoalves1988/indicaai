@@ -1,6 +1,6 @@
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -33,21 +33,22 @@ export default function FriendsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
 
+  const loadFriends = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const friendsList = await getFriends(user.uid);
+      setFriends(friendsList);
+    } catch (error) {
+      console.error("Erro ao carregar amigos:", error);
+      showAlert("Erro", "Não foi possível carregar a lista de amigos");
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
-
-    const loadFriends = async () => {
-      setLoading(true);
-      try {
-        const friendsList = await getFriends(user.uid);
-        setFriends(friendsList);
-      } catch (error) {
-        console.error("Erro ao carregar amigos:", error);
-        showAlert("Erro", "Não foi possível carregar a lista de amigos");
-      } finally {
-        setLoading(false);
-      }
-    };
 
     loadFriends();
 
@@ -100,7 +101,13 @@ export default function FriendsScreen() {
     });
 
     return () => unsubscribe();
-  }, [user]); // Adicionar friends como dependência pode causar loop, cuidado.
+  }, [user, loadFriends]); // Adicionar friends como dependência pode causar loop, cuidado.
+
+  useFocusEffect(
+    useCallback(() => {
+      loadFriends();
+    }, [loadFriends])
+  );
 
   const showAlert = (title: string, message: string) => {
     if (Platform.OS === "web") {
@@ -150,7 +157,9 @@ export default function FriendsScreen() {
       {friends.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Você ainda não adicionou amigos.</Text>
-          {/* TODO: Adicionar um botão para encontrar/adicionar amigos */}
+          <TouchableOpacity style={styles.addButton} onPress={() => router.push('/add-friend')}>
+            <Text style={styles.addButtonText}>Adicionar amigo</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -212,6 +221,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 20, color: "#333", textAlign: "center" },
   emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { fontSize: 16, color: "#666", textAlign: "center" },
+  addButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+  },
+  addButtonText: { color: '#fff', fontWeight: 'bold' },
   listContent: { paddingBottom: 20 },
   friendItemContainer: {
     flexDirection: "row",

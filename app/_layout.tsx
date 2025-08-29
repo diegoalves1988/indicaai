@@ -48,6 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="register" />
         <Stack.Screen name="friend-profile" />
+        <Stack.Screen name="add-friend" />
         <Stack.Screen name="professional-profile" />
         <Stack.Screen name="edit-professional-profile" />
         <Stack.Screen name="register-professional" />
