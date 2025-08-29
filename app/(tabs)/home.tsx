@@ -22,6 +22,11 @@ const HomeScreen = () => {
   const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [suggestedFriends, setSuggestedFriends] = useState<SuggestedFriend[]>([]);
+  const [lastSuggestedId, setLastSuggestedId] = useState<string | null>(null);
+  const [hasMoreSuggestions, setHasMoreSuggestions] = useState(false);
+  const [loadingMoreSuggestions, setLoadingMoreSuggestions] = useState(false);
+
+  const SUGGESTIONS_PAGE_SIZE = 10;
 
   const {
     professionals,
@@ -58,8 +63,12 @@ const HomeScreen = () => {
       if (!user) return;
       const profile = await getUserProfile(user.uid);
       setUserData(profile);
-      const suggestions = await getSuggestedFriends(user.uid);
+      const suggestions = await getSuggestedFriends(user.uid, SUGGESTIONS_PAGE_SIZE);
       setSuggestedFriends(suggestions);
+      setLastSuggestedId(
+        suggestions.length > 0 ? suggestions[suggestions.length - 1].userId : null
+      );
+      setHasMoreSuggestions(suggestions.length === SUGGESTIONS_PAGE_SIZE);
     };
     loadUser();
   }, [user]);
@@ -75,8 +84,12 @@ const HomeScreen = () => {
   const handleAddFriend = async (friendId: string) => {
     if (!user) return;
     await addFriend(user.uid, friendId);
-    const updated = await getSuggestedFriends(user.uid);
+    const updated = await getSuggestedFriends(user.uid, SUGGESTIONS_PAGE_SIZE);
     setSuggestedFriends(updated);
+    setLastSuggestedId(
+      updated.length > 0 ? updated[updated.length - 1].userId : null
+    );
+    setHasMoreSuggestions(updated.length === SUGGESTIONS_PAGE_SIZE);
     Alert.alert('Amigo adicionado!', 'Vocês agora estão conectados.');
   };
 
@@ -94,6 +107,24 @@ const HomeScreen = () => {
     if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 20) {
       loadMoreProfessionals();
     }
+  };
+
+  const loadMoreSuggestedFriends = async () => {
+    if (!user || loadingMoreSuggestions || !hasMoreSuggestions) return;
+    setLoadingMoreSuggestions(true);
+    const more = await getSuggestedFriends(
+      user.uid,
+      SUGGESTIONS_PAGE_SIZE,
+      lastSuggestedId || undefined
+    );
+    setSuggestedFriends((prev) => [...prev, ...more]);
+    setLastSuggestedId(
+      more.length > 0 ? more[more.length - 1].userId : lastSuggestedId
+    );
+    if (more.length < SUGGESTIONS_PAGE_SIZE) {
+      setHasMoreSuggestions(false);
+    }
+    setLoadingMoreSuggestions(false);
   };
 
   if (authLoading || loadingData) {
@@ -150,6 +181,19 @@ const HomeScreen = () => {
       )}
 
       <FriendsSuggestions friends={suggestedFriends} onAddFriend={handleAddFriend} />
+      {hasMoreSuggestions && (
+        <TouchableOpacity
+          style={styles.loadMoreButton}
+          onPress={loadMoreSuggestedFriends}
+          disabled={loadingMoreSuggestions}
+        >
+          {loadingMoreSuggestions ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={styles.loadMoreText}>Carregar mais sugestões</Text>
+          )}
+        </TouchableOpacity>
+      )}
 
       {!userData?.professionalProfile && (
         <TouchableOpacity
