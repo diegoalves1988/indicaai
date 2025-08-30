@@ -47,12 +47,13 @@
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "c46a1958-ee67-4f65-9508-49a948a1c375"
-      }
-    },
+"extra": {
+  "router": {},
+  "eas": {
+    "projectId": "c46a1958-ee67-4f65-9508-49a948a1c375"
+  },
+  "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "859975350986-ti8efpo82l4f14spa7ss3pipm6kuiiog.apps.googleusercontent.com"
+},
     "owner": "diegocruzalves",
     "updates": {
       "url": "https://u.expo.dev/c46a1958-ee67-4f65-9508-49a948a1c375"

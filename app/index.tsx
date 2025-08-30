@@ -1,7 +1,8 @@
 import { FontAwesome } from "@expo/vector-icons";
-import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import Constants from "expo-constants";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import {
   GoogleAuthProvider,
   signInWithCredential,
@@ -10,7 +11,6 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
-import * as yup from "yup";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,17 +21,28 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import * as yup from "yup";
 import { auth, db } from "../services/firebase";
 
 WebBrowser.maybeCompleteAuthSession();
 
+type FormData = { email: string; password: string };
+
 export default function Login() {
   const router = useRouter();
+
+  // ---- env do app.json (expo.extra) ----
+  const webClientId =
+    (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string;
+
+  // Guard de configuração (evita erro pedindo androidClientId)
+  if (!webClientId) {
+    console.log("extra =", Constants.expoConfig?.extra);
+  }
+
+  // ---- validação com yup ----
   const schema = yup.object({
-    email: yup
-      .string()
-      .email("E-mail inválido")
-      .required("E-mail é obrigatório"),
+    email: yup.string().email("E-mail inválido").required("E-mail é obrigatório"),
     password: yup
       .string()
       .min(6, "Senha deve ter pelo menos 6 caracteres")
@@ -43,43 +54,36 @@ export default function Login() {
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<{ email: string; password: string }>({
+  } = useForm<FormData>({
     defaultValues: { email: "", password: "" },
     resolver: async (data) => {
       try {
         const values = await schema.validate(data, { abortEarly: false });
         return { values, errors: {} };
       } catch (err) {
-        const validationError = err as yup.ValidationError;
-        const formErrors = validationError.inner.reduce<Record<string, any>>(
-          (allErrors, currentError) => {
-            return {
-              ...allErrors,
-              [currentError.path!]: {
-                type: currentError.type ?? "validation",
-                message: currentError.message,
-              },
-            };
-          },
-          {}
-        );
+        const e = err as yup.ValidationError;
+        const formErrors = e.inner.reduce<Record<string, any>>((acc, cur) => {
+          if (!cur.path) return acc;
+          acc[cur.path] = { type: cur.type ?? "validation", message: cur.message };
+          return acc;
+        }, {});
         return { values: {}, errors: formErrors };
       }
     },
   });
+
+  // ---- Google Auth (Expo Go usa 'clientId' com Web Client ID) ----
   const [, , promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string,
+    clientId: webClientId, // NÃO usar androidClientId/iosClientId no Expo Go
   });
 
-  const handleLogin = async ({ email, password }: { email: string; password: string }) => {
+  const handleLogin = async ({ email, password }: FormData) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists() && userSnap.data().profileComplete) {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists() && snap.data().profileComplete) {
         router.replace("/(tabs)/home");
       } else {
         router.replace("/complete-profile");
@@ -94,6 +98,14 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
+      if (!webClientId) {
+        Alert.alert(
+          "Configuração faltando",
+          "Defina EXPO_PUBLIC_GOOGLE_CLIENT_ID em expo.extra no app.json."
+        );
+        return;
+      }
+
       const result = await promptAsync();
       if (result?.type !== "success" || !result.params?.id_token) {
         Alert.alert("Erro", "Login com Google cancelado.");
@@ -101,13 +113,10 @@ export default function Login() {
       }
 
       const credential = GoogleAuthProvider.credential(result.params.id_token);
-      const userCredential = await signInWithCredential(auth, credential);
-      const user = userCredential.user;
+      const { user } = await signInWithCredential(auth, credential);
 
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists() && userSnap.data().profileComplete) {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists() && snap.data().profileComplete) {
         router.replace("/(tabs)/home");
       } else {
         router.replace("/complete-profile");
@@ -125,11 +134,11 @@ export default function Login() {
     >
       <View style={styles.innerContainer}>
         <Text style={styles.title}>IndicaAi</Text>
-        
+
         <Controller
           control={control}
           name="email"
-          render={({ field: { onChange, onBlur, value } }) => (
+          render={({ field: { onChange, onBlur, value} }) => (
             <TextInput
               value={value}
               onChangeText={onChange}
@@ -142,9 +151,7 @@ export default function Login() {
             />
           )}
         />
-        {errors.email && (
-          <Text style={styles.errorText}>{errors.email.message}</Text>
-        )}
+        {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
 
         <Controller
           control={control}
@@ -161,18 +168,13 @@ export default function Login() {
             />
           )}
         />
-        {errors.password && (
-          <Text style={styles.errorText}>{errors.password.message}</Text>
-        )}
+        {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
 
         <TouchableOpacity style={styles.button} onPress={handleSubmit(handleLogin)}>
           <Text style={styles.buttonText}>Entrar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, styles.googleButton]}
-          onPress={handleGoogleLogin}
-        >
+        <TouchableOpacity style={[styles.button, styles.googleButton]} onPress={handleGoogleLogin}>
           <FontAwesome name="google" size={20} style={styles.icon} />
           <Text style={styles.googleButtonText}>Entrar com Google</Text>
         </TouchableOpacity>
@@ -194,7 +196,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1d3f5d", // degrade azul claro pode ser simulado com LinearGradient
+    backgroundColor: "#1d3f5d",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -210,11 +212,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 10,
     elevation: 6,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
   },
   title: {
     fontSize: 28,
@@ -241,11 +238,7 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 16,
   },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  buttonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
   googleButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -257,29 +250,10 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
   },
-  googleButtonText:{
-    color: "black",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  icon: {
-    marginRight: 8,
-  },
-  linksContainer: {
-    flexDirection: "row",
-    marginTop: 16,
-  },
-  link: {
-    color: "#1976D2",
-    fontWeight: "500",
-  },
-  separator: {
-    marginHorizontal: 8,
-    color: "#6B7280",
-  },
-  errorText: {
-    alignSelf: "flex-start",
-    color: "#f43f5e",
-    marginBottom: 8,
-  },
+  googleButtonText: { color: "black", fontSize: 16, fontWeight: "600" },
+  icon: { marginRight: 8 },
+  linksContainer: { flexDirection: "row", marginTop: 16 },
+  link: { color: "#1976D2", fontWeight: "500" },
+  separator: { marginHorizontal: 8, color: "#6B7280" },
+  errorText: { alignSelf: "flex-start", color: "#f43f5e", marginBottom: 8 },
 });
