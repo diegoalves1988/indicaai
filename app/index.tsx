@@ -1,5 +1,6 @@
 import { FontAwesome } from "@expo/vector-icons";
 import * as Google from "expo-auth-session/providers/google";
+import { makeRedirectUri } from "expo-auth-session";
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -40,6 +41,11 @@ export default function Login() {
     console.log("extra =", Constants.expoConfig?.extra);
   }
 
+  const redirectUri = makeRedirectUri({
+    scheme: Constants.expoConfig?.scheme ?? "indicaai",
+    useProxy: true,
+  });
+
   // ---- validação com yup ----
   const schema = yup.object({
     email: yup.string().email("E-mail inválido").required("E-mail é obrigatório"),
@@ -75,6 +81,7 @@ export default function Login() {
   // ---- Google Auth (Expo Go usa 'clientId' com Web Client ID) ----
   const [, , promptAsync] = Google.useIdTokenAuthRequest({
     clientId: webClientId, // NÃO usar androidClientId/iosClientId no Expo Go
+    redirectUri,
   });
 
   const handleLogin = async ({ email, password }: FormData) => {
