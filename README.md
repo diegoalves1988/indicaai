@@ -33,3 +33,11 @@
    git clone https://github.com/diegoalves1988/indicaai
    ```
 
+## 🔑 Configuração do Login com Google
+
+1. No [Google Cloud Console](https://console.cloud.google.com), em **OAuth consent screen** adicione o domínio do app em **Authorized domains**.
+2. Em **Credentials**, edite o **OAuth 2.0 Client ID** e inclua nas **Authorized redirect URIs** o valor sugerido pelo Expo (por exemplo `https://auth.expo.io/@diegocruzalves/indicaai`) ou o esquema definido no `app.json` (`indicaai://auth`).
+3. Copie o **Client ID** do tipo Web e defina-o em `app.json` dentro de `expo.extra.EXPO_PUBLIC_GOOGLE_CLIENT_ID`.
+4. Após salvar as alterações, limpe cookies/sessão do app e tente novamente o login.
+
+
