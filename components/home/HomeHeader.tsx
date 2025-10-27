@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import UserAvatar from '../../../components/UserAvatar';
+import UserAvatar from '../UserAvatar';
 import SearchBar from './SearchBar';
 
 interface ActiveFilters {

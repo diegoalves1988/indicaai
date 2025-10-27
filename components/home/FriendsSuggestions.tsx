@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import UserAvatar from '../../../components/UserAvatar';
+import UserAvatar from '../UserAvatar';
 
 interface SuggestedFriend {
   userId: string;
@@ -29,7 +29,7 @@ const FriendsSuggestions: React.FC<FriendsSuggestionsProps> = ({ friends, onAddF
         showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => router.push({ pathname: '../friend-profile', params: { friendId: item.userId } })}
+            onPress={() => router.push({ pathname: '/friend-profile', params: { friendId: item.userId } })}
             style={styles.itemContainer}
           >
             <UserAvatar photoURL={item.photoURL} name={item.name} size={60} />

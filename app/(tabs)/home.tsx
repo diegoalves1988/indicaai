@@ -3,9 +3,9 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacit
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
 
-import HomeHeader from './home/HomeHeader';
-import ProfessionalList from './home/ProfessionalList';
-import FriendsSuggestions from './home/FriendsSuggestions';
+import HomeHeader from '../../components/home/HomeHeader';
+import ProfessionalList from '../../components/home/ProfessionalList';
+import FriendsSuggestions from '../../components/home/FriendsSuggestions';
 import { useProfessionals } from '../../hooks/useProfessionals';
 import { useAuth } from '../../hooks/useAuth';
 import { auth } from '../../services/firebase';
