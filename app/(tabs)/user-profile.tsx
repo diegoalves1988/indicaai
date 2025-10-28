@@ -218,9 +218,23 @@ function UserProfileScreen() {
   };
 
   const showImageOptions = () => {
+    if (Platform.OS === "web") {
+      if (photoURL && typeof window !== "undefined") {
+        const shouldRemove = window.confirm(
+          "Deseja remover a foto de perfil atual? Clique em 'Cancelar' para escolher uma nova imagem."
+        );
+        if (shouldRemove) {
+          handleRemovePhoto();
+          return;
+        }
+      }
+      handleImageSelectionFromLibrary();
+      return;
+    }
+
     const options = ["Escolher da Galeria"];
     if (Platform.OS !== "web") {
-        options.unshift("Tirar Foto");
+      options.unshift("Tirar Foto");
     }
     if (photoURL) {
       options.push("Remover Foto");
