@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+import { View, TextInput, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SearchBarProps {
   value: string;
   onChangeText: (text: string) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, style }) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Ionicons name="search-outline" size={20} color="#8E8E93" style={styles.icon} />
       <TextInput
         style={styles.input}
@@ -30,8 +31,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    marginHorizontal: 16,
-    marginTop: -20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
