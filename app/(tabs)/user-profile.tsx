@@ -117,11 +117,11 @@ function UserProfileScreen() {
     router.push("/edit-professional-profile");
   };
 
-  const processAndUploadImage = async (uri: string) => {
+  const processAndUploadImage = async (source: string | Blob) => {
     if (!user) return;
     setUploadingImage(true);
     try {
-      const newPhotoURL = await uploadProfileImage(user.uid, uri);
+      const newPhotoURL = await uploadProfileImage(user.uid, source);
       setPhotoURL(newPhotoURL);
       Alert.alert("Sucesso", "Foto de perfil atualizada!");
     } catch (error) {
@@ -179,13 +179,7 @@ function UserProfileScreen() {
   const handleFileSelectedForWeb = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          processAndUploadImage(reader.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+      processAndUploadImage(file);
     }
      // Limpa o valor do input para permitir selecionar o mesmo arquivo novamente
     if (fileInputRef.current) {
@@ -218,9 +212,23 @@ function UserProfileScreen() {
   };
 
   const showImageOptions = () => {
+    if (Platform.OS === "web") {
+      if (photoURL && typeof window !== "undefined") {
+        const shouldRemove = window.confirm(
+          "Deseja remover a foto de perfil atual? Clique em 'Cancelar' para escolher uma nova imagem."
+        );
+        if (shouldRemove) {
+          handleRemovePhoto();
+          return;
+        }
+      }
+      handleImageSelectionFromLibrary();
+      return;
+    }
+
     const options = ["Escolher da Galeria"];
     if (Platform.OS !== "web") {
-        options.unshift("Tirar Foto");
+      options.unshift("Tirar Foto");
     }
     if (photoURL) {
       options.push("Remover Foto");

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import UserAvatar from '../../../components/UserAvatar';
+import UserAvatar from '../UserAvatar';
 
 interface Professional {
   id: string;
