@@ -19,6 +19,7 @@ import {
   startAfter,
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage"; // Adicionado para Firebase Storage
+import { Platform } from "react-native";
 import { db, storage } from "./firebase"; // Adicionado storage
 import { deleteProfessionalProfile } from "./professionalService";
 
@@ -60,29 +61,40 @@ export async function updateUserProfile(userId: string, updatedData: Partial<Use
 }
 
 // ✅ Upload da imagem de perfil para o Firebase Storage e retorna a URL de download
-export async function uploadProfileImage(userId: string, imageUri: string): Promise<string> {
+export async function uploadProfileImage(userId: string, imageSource: string | Blob): Promise<string> {
   try {
     console.log("[uploadProfileImage] userId:", userId);
-    console.log("[uploadProfileImage] imageUri:", imageUri);
-    const response = await fetch(imageUri);
-    const blob = await response.blob();
+    console.log("[uploadProfileImage] imageSource:", typeof imageSource === "string" ? imageSource : imageSource.type);
+
+    let blob: Blob;
+    if (typeof imageSource === "string") {
+      const response = await fetch(imageSource);
+      blob = await response.blob();
+    } else {
+      blob = imageSource;
+    }
+
     console.log("[uploadProfileImage] blob criado, tamanho:", blob.size);
     const storageRef = ref(storage, `profile_pics/${userId}/profile.jpg`);
-    
+
     // Deleta a imagem antiga, se existir, para evitar acúmulo de arquivos não utilizados
-    try {
-      await getDownloadURL(storageRef); // Verifica se o arquivo existe
-      await deleteObject(storageRef); // Deleta o arquivo antigo
-      console.log("Imagem de perfil antiga removida.");
-    } catch (error: any) {
-      if (error.code === 'storage/object-not-found') {
-        console.log("Nenhuma imagem de perfil antiga encontrada para remover.");
-      } else {
-        console.warn("Erro ao verificar/remover imagem de perfil antiga:", error);
+    if (Platform.OS !== "web") {
+      try {
+        await getDownloadURL(storageRef); // Verifica se o arquivo existe
+        await deleteObject(storageRef); // Deleta o arquivo antigo
+        console.log("Imagem de perfil antiga removida.");
+      } catch (error: any) {
+        if (error.code === 'storage/object-not-found') {
+          console.log("Nenhuma imagem de perfil antiga encontrada para remover.");
+        } else {
+          console.warn("Erro ao verificar/remover imagem de perfil antiga:", error);
+        }
       }
     }
 
-    const uploadTask = uploadBytesResumable(storageRef, blob);
+    const uploadTask = uploadBytesResumable(storageRef, blob, {
+      contentType: blob.type || "image/jpeg",
+    });
     console.log("[uploadProfileImage] upload iniciado para:", storageRef.fullPath);
 
     return new Promise((resolve, reject) => {
@@ -98,7 +110,20 @@ export async function uploadProfileImage(userId: string, imageUri: string): Prom
           reject(error);
         },
         async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          const { metadata } = uploadTask.snapshot;
+          const downloadTokens = (metadata as Record<string, any>)?.downloadTokens;
+          let downloadURL: string;
+
+          if (downloadTokens) {
+            downloadURL = `https://firebasestorage.googleapis.com/v0/b/${metadata.bucket}/o/${encodeURIComponent(
+              metadata.fullPath
+            )}?alt=media&token=${downloadTokens}`;
+            console.log("[uploadProfileImage] URL construída a partir do metadata.");
+          } else {
+            downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            console.log("[uploadProfileImage] URL obtida via getDownloadURL.");
+          }
+
           console.log("[uploadProfileImage] Upload finalizado. URL:", downloadURL);
           await updateUserProfile(userId, { photoURL: downloadURL });
           resolve(downloadURL);
