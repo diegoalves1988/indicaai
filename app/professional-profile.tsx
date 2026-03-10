@@ -579,26 +579,5 @@ const styles = StyleSheet.create({
     color: "#263238",
   },
 });
-  },
-  recommendButton: {
-    backgroundColor: "#28A745", // Verde para recomendar
-  },
-  removeButton: {
-    backgroundColor: "#DC3545", // Vermelho para remover
-  },
-  recommenderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 0,
-  },
-  recommenderName: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#1d3f5d',
-    fontWeight: '600',
-  },
-});
 
 export default ProfessionalProfileScreen;
