@@ -232,13 +232,16 @@ const ProfessionalProfileScreen = () => {
             {/* Favoritar e Avaliação em linha */}
             <View style={styles.headerActions}>
               {user && user.uid !== professional.userId && (
-                <TouchableOpacity onPress={handleToggleFavorite} style={styles.favoriteButton}>
+                <TouchableOpacity 
+                  onPress={handleToggleFavorite} 
+                  style={[styles.favoriteButton, isFavorited && styles.favoriteButtonActive]}
+                >
                   <FontAwesome
                     name={isFavorited ? "heart" : "heart-o"}
                     size={20}
-                    color={isFavorited ? "#FFB300" : "#FFFFFF"}
+                    color={isFavorited ? "#DC3545" : "#FFFFFF"}
                   />
-                  <Text style={styles.favoriteText}>
+                  <Text style={[styles.favoriteText, isFavorited && styles.favoriteTextActive]}>
                     {isFavorited ? "Favoritado" : "Favoritar"}
                   </Text>
                 </TouchableOpacity>
@@ -423,10 +426,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     gap: 6,
   },
+  favoriteButtonActive: {
+    backgroundColor: "#FFFFFF",
+  },
   favoriteText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
+  },
+  favoriteTextActive: {
+    color: "#DC3545",
   },
   contentCard: {
     backgroundColor: "#FFFFFF",
