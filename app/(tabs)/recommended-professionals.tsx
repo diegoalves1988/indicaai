@@ -28,6 +28,7 @@ interface Professional {
   city?: string;
   userId?: string;
   photoURL?: string | null;
+  type?: "recommended" | "favorite"; // Added to distinguish types
 }
 
 const RecommendedProfessionalsScreen = () => {
@@ -38,6 +39,7 @@ const RecommendedProfessionalsScreen = () => {
   const [favoriteProfessionals, setFavoriteProfessionals] = useState<Professional[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
+  const [filterType, setFilterType] = useState<"all" | "recommended" | "favorite">("all");
 
   useEffect(() => {
     if (!user?.uid) {
@@ -138,12 +140,35 @@ const RecommendedProfessionalsScreen = () => {
     }
   };
 
+  // Combine professionals and favorites into a single unified list
+  const unifiedList = useMemo(() => {
+    const recommendedWithType = professionals.map(p => ({ ...p, type: "recommended" as const }));
+    const favoritesWithType = favoriteProfessionals.map(p => ({ ...p, type: "favorite" as const }));
+    
+    // Combine and remove duplicates (if a professional is both recommended and favorite, show as recommended)
+    const combined = [...recommendedWithType];
+    favoritesWithType.forEach(fav => {
+      if (!combined.find(p => p.id === fav.id)) {
+        combined.push(fav);
+      }
+    });
+    
+    return combined;
+  }, [professionals, favoriteProfessionals]);
+
+  // Filter the unified list based on selected filter
+  const filteredList = useMemo(() => {
+    if (filterType === "all") return unifiedList;
+    return unifiedList.filter(p => p.type === filterType);
+  }, [unifiedList, filterType]);
+
   const stats = useMemo(
     () => [
       { label: "Indicações", value: professionals.length },
       { label: "Favoritos", value: favoriteProfessionals.length },
+      { label: "Total", value: unifiedList.length },
     ],
-    [favoriteProfessionals.length, professionals.length],
+    [favoriteProfessionals.length, professionals.length, unifiedList.length],
   );
 
   const renderEmptyState = (
@@ -165,56 +190,59 @@ const RecommendedProfessionalsScreen = () => {
     </View>
   );
 
-  const renderProfessionalCard = (professional: Professional, variant: "recommended" | "favorite") => (
-    <View key={professional.id} style={styles.professionalCard}>
-      <TouchableOpacity
-        onPress={() => router.push({ pathname: "/professional-profile", params: { id: professional.id } })}
-        style={styles.professionalRow}
-      >
-        <UserAvatar photoURL={professional.photoURL} name={professional.name} size={56} />
-        <View style={styles.professionalDetails}>
-          <View style={styles.professionalHeaderRow}>
-            <Text style={styles.professionalName}>{professional.name}</Text>
-            <View
-              style={[
-                styles.badge,
-                variant === "recommended" ? styles.badgeRecommended : styles.badgeFavorite,
-              ]}
-            >
-              <Text style={styles.badgeText}>
-                {variant === "recommended" ? "Indicado" : "Favorito"}
-              </Text>
+  const renderProfessionalCard = (professional: Professional) => {
+    const variant = professional.type || "recommended";
+    return (
+      <View key={professional.id} style={styles.professionalCard}>
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: "/professional-profile", params: { id: professional.id } })}
+          style={styles.professionalRow}
+        >
+          <UserAvatar photoURL={professional.photoURL} name={professional.name} size={56} />
+          <View style={styles.professionalDetails}>
+            <View style={styles.professionalHeaderRow}>
+              <Text style={styles.professionalName}>{professional.name}</Text>
+              <View
+                style={[
+                  styles.badge,
+                  variant === "recommended" ? styles.badgeRecommended : styles.badgeFavorite,
+                ]}
+              >
+                <Text style={styles.badgeText}>
+                  {variant === "recommended" ? "Indicado" : "Favorito"}
+                </Text>
+              </View>
             </View>
+            <Text style={styles.professionalMeta}>
+              {[professional.category, professional.city].filter(Boolean).join(" • ") || "Informações indisponíveis"}
+            </Text>
           </View>
-          <Text style={styles.professionalMeta}>
-            {[professional.category, professional.city].filter(Boolean).join(" • ") || "Informações indisponíveis"}
+          <Feather name="chevron-right" size={20} color="#90A4AE" />
+        </TouchableOpacity>
+        <View style={styles.professionalFooter}>
+          <Text style={styles.professionalHint}>
+            {variant === "recommended"
+              ? "Sua indicação ajuda outras pessoas a confiarem neste profissional."
+              : "Salvo para contato futuro. Toque para ver mais detalhes."}
           </Text>
+          {variant === "recommended" ? (
+            <TouchableOpacity
+              onPress={() => confirmRemoveRecommendation(professional)}
+              style={styles.removeButton}
+            >
+              <Feather name="user-x" size={16} color="#C62828" />
+              <Text style={styles.removeButtonText}>Remover indicação</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.favoriteTag}>
+              <Feather name="star" size={14} color="#FFB300" />
+              <Text style={styles.favoriteTagText}>Acesso rápido</Text>
+            </View>
+          )}
         </View>
-        <Feather name="chevron-right" size={20} color="#90A4AE" />
-      </TouchableOpacity>
-      <View style={styles.professionalFooter}>
-        <Text style={styles.professionalHint}>
-          {variant === "recommended"
-            ? "Sua indicação ajuda outras pessoas a confiarem neste profissional."
-            : "Toque para ver mais detalhes ou marcar um serviço."}
-        </Text>
-        {variant === "recommended" ? (
-          <TouchableOpacity
-            onPress={() => confirmRemoveRecommendation(professional)}
-            style={styles.removeButton}
-          >
-            <Feather name="user-x" size={16} color="#C62828" />
-            <Text style={styles.removeButtonText}>Remover indicação</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.favoriteTag}>
-            <Feather name="star" size={14} color="#FFB300" />
-            <Text style={styles.favoriteTagText}>Acesso rápido</Text>
-          </View>
-        )}
       </View>
-    </View>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -250,34 +278,55 @@ const RecommendedProfessionalsScreen = () => {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Profissionais indicados por você</Text>
+          <Text style={styles.sectionTitle}>Meus Profissionais</Text>
           <Text style={styles.sectionSubtitle}>
-            Gerencie as recomendações que você compartilhou com a comunidade.
+            Profissionais que você indicou e salvou como favoritos, tudo em um só lugar.
           </Text>
         </View>
-        {professionals.length === 0
-          ? renderEmptyState(
-              "Nenhuma indicação por aqui",
-              "Quando você recomendar alguém, ele aparecerá nesta lista.",
-              () => router.push("/(tabs)/home"),
-            )
-          : professionals.map((professional) => renderProfessionalCard(professional, "recommended"))}
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Favoritos</Text>
-          <Text style={styles.sectionSubtitle}>
-            Profissionais que você acompanha de perto para contratar novamente.
-          </Text>
+        {/* Filter buttons */}
+        <View style={styles.filterButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.filterBtn, filterType === "all" && styles.filterBtnActive]}
+            onPress={() => setFilterType("all")}
+          >
+            <Text style={[styles.filterBtnText, filterType === "all" && styles.filterBtnTextActive]}>
+              Todos ({unifiedList.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterBtn, filterType === "recommended" && styles.filterBtnActive]}
+            onPress={() => setFilterType("recommended")}
+          >
+            <Text style={[styles.filterBtnText, filterType === "recommended" && styles.filterBtnTextActive]}>
+              Indicados ({professionals.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterBtn, filterType === "favorite" && styles.filterBtnActive]}
+            onPress={() => setFilterType("favorite")}
+          >
+            <Text style={[styles.filterBtnText, filterType === "favorite" && styles.filterBtnTextActive]}>
+              Favoritos ({favoriteProfessionals.length})
+            </Text>
+          </TouchableOpacity>
         </View>
-        {favoriteProfessionals.length === 0
+
+        {filteredList.length === 0
           ? renderEmptyState(
-              "Você ainda não tem favoritos",
-              "Salve os profissionais que mais gosta para encontrá-los em segundos.",
+              filterType === "all"
+                ? "Nenhum profissional por aqui"
+                : filterType === "recommended"
+                ? "Nenhuma indicação por aqui"
+                : "Você ainda não tem favoritos",
+              filterType === "all"
+                ? "Quando você indicar ou favoritar alguém, ele aparecerá aqui."
+                : filterType === "recommended"
+                ? "Quando você recomendar alguém, ele aparecerá nesta lista."
+                : "Salve profissionais para encontrá-los rapidamente quando precisar.",
               () => router.push("/(tabs)/home"),
             )
-          : favoriteProfessionals.map((professional) => renderProfessionalCard(professional, "favorite"))}
+          : filteredList.map((professional) => renderProfessionalCard(professional))}
       </View>
 
       <Modal
@@ -398,6 +447,38 @@ const styles = StyleSheet.create({
     color: "#607D8B",
     marginTop: 4,
     lineHeight: 20,
+  },
+  filterButtonsContainer: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 20,
+  },
+  filterBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E0E6ED",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  filterBtnActive: {
+    backgroundColor: "#1d3f5d",
+    borderColor: "#1d3f5d",
+  },
+  filterBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#607D8B",
+  },
+  filterBtnTextActive: {
+    color: "#FFFFFF",
   },
   emptyContainer: {
     backgroundColor: "#FFFFFF",

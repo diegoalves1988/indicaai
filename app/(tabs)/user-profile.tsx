@@ -1,4 +1,5 @@
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { deleteUser, signOut } from "firebase/auth";
 import { arrayRemove, collection, deleteDoc, doc, getDocs, updateDoc } from "firebase/firestore";
@@ -16,6 +17,7 @@ import {
   View,
 } from "react-native";
 import MaskInput from "react-native-mask-input";
+import { Ionicons } from "@expo/vector-icons";
 import UserAvatar from "../../components/UserAvatar";
 import { useAuth } from "../../hooks/useAuth";
 import { auth, db } from "../../services/firebase";
@@ -365,120 +367,175 @@ function UserProfileScreen() {
           onChange={handleFileSelectedForWeb}
         />
       )}
-      <View style={styles.profileHeader}>
-        <TouchableOpacity onPress={showImageOptions} disabled={uploadingImage}>
-          <UserAvatar photoURL={photoURL} name={name} size={100} />
-          {uploadingImage && <ActivityIndicator style={styles.avatarLoading} size="small" />}
+      
+      {/* Gradient Header */}
+      <LinearGradient colors={["#1d3f5d", "#0F2027"]} style={styles.headerBackground}>
+        <View style={styles.profileHeader}>
+          <TouchableOpacity onPress={showImageOptions} disabled={uploadingImage}>
+            <View style={styles.avatarContainer}>
+              <UserAvatar photoURL={photoURL} name={name} size={100} />
+              {uploadingImage && (
+                <View style={styles.avatarOverlay}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.userName}>{name || "Usuário"}</Text>
+          <TouchableOpacity
+            style={styles.changePhotoButton}
+            onPress={showImageOptions}
+            disabled={uploadingImage}
+          >
+            <Ionicons name="camera" size={16} color="#1d3f5d" />
+            <Text style={styles.changePhotoText}>Alterar Foto</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
+      {/* Content Card */}
+      <View style={styles.contentCard}>
+        <Text style={styles.sectionTitle}>Informações Pessoais</Text>
+        <TextInput style={styles.input} placeholder="Nome" value={name} onChangeText={setName} />
+        <MaskInput
+          style={styles.input}
+          placeholder="Telefone"
+          value={phone}
+          onChangeText={handlePhoneChange}
+          mask={["(", /\d/, /\d/, ")", " ", /\d/, /\d/, /\d/, /\d/, /\d/, "-", /\d/, /\d/, /\d/, /\d/]}
+          keyboardType="phone-pad"
+        />
+
+        <Text style={styles.sectionTitle}>Endereço</Text>
+        <MaskInput
+          style={styles.input}
+          placeholder="CEP"
+          value={cep}
+          onChangeText={handleCepChange}
+          mask={[/\d/, /\d/, /\d/, /\d/, /\d/, "-", /\d/, /\d/, /\d/]}
+          keyboardType="numeric"
+        />
+        <TextInput style={styles.input} placeholder="Rua" value={street} onChangeText={setStreet} />
+        <TextInput style={styles.input} placeholder="Cidade" value={city} onChangeText={setCity} />
+        <TextInput style={styles.input} placeholder="Estado" value={stateValue} onChangeText={setStateValue} />
+        <TextInput style={styles.input} placeholder="País" value={country} onChangeText={setCountry} />
+
+        <TouchableOpacity
+          style={[styles.button, (saving || uploadingImage) && styles.buttonDisabled]}
+          onPress={handleSave}
+          disabled={saving || uploadingImage}
+        >
+          <Text style={styles.buttonText}>{saving ? "Salvando..." : "Salvar Alterações"}</Text>
         </TouchableOpacity>
-        <Text style={styles.userName}>{name || "Usuário"}</Text>
+
+        {isProfessional && (
+          <>
+            <Text style={styles.sectionTitle}>Perfil Profissional</Text>
+            <TouchableOpacity
+              style={[styles.button, styles.professionalButton]}
+              onPress={navigateToEditProfessionalProfile}
+            >
+              <Text style={styles.buttonText}>Editar Perfil Profissional</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.deleteButton]}
+              onPress={handleDeleteProfessionalProfile}
+            >
+              <Text style={styles.buttonText}>Excluir Perfil Profissional</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        <Text style={styles.sectionTitle}>Configurações da Conta</Text>
+        <TouchableOpacity
+          style={[styles.button, styles.deleteAccountButton]}
+          onPress={handleDeleteAccount}
+        >
+          <Text style={styles.buttonText}>Excluir Conta</Text>
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        style={[styles.button, uploadingImage && styles.buttonDisabled]}
-        onPress={showImageOptions}
-        disabled={uploadingImage}
-      >
-        <Text style={styles.buttonText}>Alterar Foto</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-      <TextInput style={styles.input} placeholder="Nome" value={name} onChangeText={setName} />
-      <MaskInput
-        style={styles.input}
-        placeholder="Telefone"
-        value={phone}
-        onChangeText={handlePhoneChange}
-        mask={["(", /\d/, /\d/, ")", " ", /\d/, /\d/, /\d/, /\d/, /\d/, "-", /\d/, /\d/, /\d/, /\d/]}
-        keyboardType="phone-pad"
-      />
-
-      <Text style={styles.sectionTitle}>Endereço</Text>
-      <MaskInput
-        style={styles.input}
-        placeholder="CEP"
-        value={cep}
-        onChangeText={handleCepChange}
-        mask={[/\d/, /\d/, /\d/, /\d/, /\d/, "-", /\d/, /\d/, /\d/]}
-        keyboardType="numeric"
-      />
-      <TextInput style={styles.input} placeholder="Rua" value={street} onChangeText={setStreet} />
-      <TextInput style={styles.input} placeholder="Cidade" value={city} onChangeText={setCity} />
-      <TextInput style={styles.input} placeholder="Estado" value={stateValue} onChangeText={setStateValue} />
-      <TextInput style={styles.input} placeholder="País" value={country} onChangeText={setCountry} />
-
-      <TouchableOpacity
-        style={[styles.button, (saving || uploadingImage) && styles.buttonDisabled]}
-        onPress={handleSave}
-        disabled={saving || uploadingImage}
-      >
-        <Text style={styles.buttonText}>{saving ? "Salvando..." : "Salvar Alterações Pessoais"}</Text>
-      </TouchableOpacity>
-
-      {isProfessional && (
-        <>
-          <TouchableOpacity
-            style={[styles.button, styles.professionalButton]}
-            onPress={navigateToEditProfessionalProfile}
-          >
-            <Text style={[styles.buttonText, { color: "#fff" }]}>Editar Perfil Profissional</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.deleteButton]}
-            onPress={handleDeleteProfessionalProfile}
-          >
-            <Text style={styles.buttonText}>Excluir Perfil Profissional</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      <TouchableOpacity
-        style={[styles.button, styles.deleteAccountButton]}
-        onPress={handleDeleteAccount}
-      >
-        <Text style={styles.buttonText}>Excluir Conta</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
+    backgroundColor: "#F5F5F5",
     paddingBottom: 40,
+  },
+  headerBackground: {
+    width: "100%",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   profileHeader: {
     alignItems: "center",
-    marginBottom: 20,
   },
-  avatarLoading: {
+  avatarContainer: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  avatarOverlay: {
     position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
   },
   userName: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginTop: 10,
-    color: "#1d3f5d", // primary blue
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#FFFFFF",
     textAlign: "center",
+    marginBottom: 12,
+  },
+  changePhotoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  changePhotoText: {
+    color: "#1d3f5d",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  contentCard: {
+    backgroundColor: "#FFFFFF",
+    marginTop: -20,
+    marginHorizontal: 20,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 24,
-    marginBottom: 10,
-    color: "#1d3f5d", // primary blue
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-    paddingBottom: 6,
+    fontWeight: "700",
+    marginTop: 20,
+    marginBottom: 16,
+    color: "#263238",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#1d3f5d", // primary blue
-    borderRadius: 8,
-    padding: Platform.OS === "ios" ? 12 : 10,
+    borderColor: "#E0E6ED",
+    borderRadius: 12,
+    padding: Platform.OS === "ios" ? 14 : 12,
     marginBottom: 12,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8F9FA",
     color: "#1C1C1E",
     fontSize: 16,
   },
@@ -486,40 +543,40 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F5F5F5",
   },
   button: {
     backgroundColor: "#1d3f5d",
-    borderRadius: 10,
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
-    marginTop: 15,
-    marginBottom: 5,
+    marginTop: 12,
   },
   buttonDisabled: {
     backgroundColor: "#A0A0A0",
+    opacity: 0.6,
   },
   buttonText: {
     color: "#FFFFFF",
-    fontWeight: "bold",
+    fontWeight: "600",
     fontSize: 16,
   },
   deleteButton: {
     backgroundColor: "#DC3545",
-    marginTop: 5,
+    marginTop: 8,
   },
   professionalButton: {
-    backgroundColor: "#1d3f5d",
+    backgroundColor: "#4CAF50",
   },
   deleteAccountButton: {
     backgroundColor: "#DC3545",
-    marginTop: 20,
+    marginTop: 12,
   },
 });
 

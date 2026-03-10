@@ -1,4 +1,5 @@
 import { FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -216,142 +217,160 @@ const ProfessionalProfileScreen = () => {
   const professionalPhone = professional?.phone || professionalUser?.phone;
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.profileHeader}>
-          <UserAvatar
-            photoURL={professionalUser?.photoURL}
-            name={professionalName}
-            size={120}
-          />
-          <Text style={styles.name}>{professionalName}</Text>
-          
-          {/* Botão de Favoritar */}
+        {/* Gradient Header */}
+        <LinearGradient colors={["#1d3f5d", "#0F2027"]} style={styles.headerBackground}>
+          <View style={styles.profileHeader}>
+            <UserAvatar
+              photoURL={professionalUser?.photoURL}
+              name={professionalName}
+              size={100}
+            />
+            <Text style={styles.name}>{professionalName}</Text>
+            
+            {/* Favoritar e Avaliação em linha */}
+            <View style={styles.headerActions}>
+              {user && user.uid !== professional.userId && (
+                <TouchableOpacity onPress={handleToggleFavorite} style={styles.favoriteButton}>
+                  <FontAwesome
+                    name={isFavorited ? "heart" : "heart-o"}
+                    size={20}
+                    color={isFavorited ? "#FFB300" : "#FFFFFF"}
+                  />
+                  <Text style={styles.favoriteText}>
+                    {isFavorited ? "Favoritado" : "Favoritar"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* Content Card */}
+        <View style={styles.contentCard}>
+          {/* Rating Component */}
           {user && user.uid !== professional.userId && (
-            <TouchableOpacity onPress={handleToggleFavorite} style={{ marginTop: 8, alignSelf: 'center' }}>
-              <FontAwesome
-                name={isFavorited ? "heart" : "heart-o"}
-                size={32}
-                color={isFavorited ? "#e53935" : "#888"}
+            <View style={styles.ratingSection}>
+              <RatingComponent
+                professionalId={id.toString()}
+                showRating={ratingStats.showRating}
+                averageRating={ratingStats.averageRating}
+                totalRatings={ratingStats.totalRatings}
+                onRatingSubmitted={handleRatingSubmitted}
+                size="large"
               />
-              <Text style={{ color: isFavorited ? "#e53935" : "#888", fontSize: 12, textAlign: 'center' }}>
-                {isFavorited ? "Favorito" : "Favoritar"}
-              </Text>
+            </View>
+          )}
+
+          {/* Phone Section */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <MaterialIcons name="phone" size={24} color="#1d3f5d" style={styles.icon} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoLabel}>Telefone</Text>
+                {professionalPhone ? (
+                  <TouchableOpacity onPress={handleCall}>
+                    <Text style={[styles.infoValue, styles.linkText]}>{professionalPhone}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={styles.infoValue}>Não informado</Text>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          {user && user.uid === professional.userId && (
+            <TouchableOpacity style={[styles.button, styles.editButton]} onPress={handleEditProfile}>
+              <MaterialIcons name="edit" size={20} color="white" />
+              <Text style={styles.buttonText}>Editar Perfil</Text>
             </TouchableOpacity>
           )}
 
-          {/* Componente de Avaliação */}
-          {user && user.uid !== professional.userId && (
-            <RatingComponent
-              professionalId={id.toString()}
-              showRating={ratingStats.showRating}
-              averageRating={ratingStats.averageRating}
-              totalRatings={ratingStats.totalRatings}
-              onRatingSubmitted={handleRatingSubmitted}
-              size="large"
-            />
+          {user && user.uid !== professional.userId && !isRecommended && (
+            <TouchableOpacity style={[styles.button, styles.recommendButton]} onPress={handleAddRecommendation}>
+              <FontAwesome name="thumbs-up" size={18} color="white" />
+              <Text style={styles.buttonText}>Recomendar</Text>
+            </TouchableOpacity>
           )}
-        </View>
 
-        <View style={styles.section}>
-          <View style={styles.infoRow}>
-            <MaterialIcons name="phone" size={24} color="#4F4F4F" style={styles.icon} />
-            <Text style={styles.infoLabel}>Telefone:</Text>
-            {professionalPhone ? (
-              <TouchableOpacity onPress={handleCall}>
-                <Text style={[styles.infoValue, styles.linkText]}>{professionalPhone}</Text>
-              </TouchableOpacity>
-            ) : (
-              <Text style={styles.infoValue}>Não informado</Text>
-            )}
-          </View>
-        </View>
+          {user && user.uid !== professional.userId && isRecommended && (
+            <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveRecommendation}>
+              <FontAwesome name="thumbs-down" size={18} color="white" />
+              <Text style={styles.buttonText}>Remover Indicação</Text>
+            </TouchableOpacity>
+          )}
 
-        {user && user.uid === professional.userId && (
-          <TouchableOpacity style={[styles.button, styles.editButton]} onPress={handleEditProfile}>
-            <MaterialIcons name="edit" size={20} color="white" />
-            <Text style={styles.buttonText}>Editar Meu Perfil Profissional</Text>
-          </TouchableOpacity>
-        )}
+          {/* Details Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Detalhes Profissionais</Text>
 
-        {user && user.uid !== professional.userId && !isRecommended && (
-          <TouchableOpacity style={[styles.button, styles.recommendButton]} onPress={handleAddRecommendation}>
-            <FontAwesome name="thumbs-up" size={20} color="white" />
-            <Text style={styles.buttonText}>Recomendar Este Profissional</Text>
-          </TouchableOpacity>
-        )}
-
-        {user && user.uid !== professional.userId && isRecommended && (
-          <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveRecommendation}>
-            <FontAwesome name="thumbs-down" size={20} color="white" />
-            <Text style={styles.buttonText}>Remover Indicação</Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detalhes do Profissional</Text>
-
-          <View style={styles.infoRowVertical}>
-            <View style={styles.infoRowHeader}>
-              <MaterialIcons name="star" size={24} color="#4F4F4F" style={styles.icon} />
-              <Text style={styles.infoLabel}>Especialidades:</Text>
+            {/* Specialties */}
+            <View style={styles.infoRowVertical}>
+              <View style={styles.infoRowHeader}>
+                <MaterialIcons name="star" size={22} color="#1d3f5d" style={styles.icon} />
+                <Text style={styles.infoLabel}>Especialidades</Text>
+              </View>
+              {professional.specialties && professional.specialties.length > 0 ? (
+                <View style={styles.specialtiesContainer}>
+                  {professional.specialties.map((spec: string, index: number) => (
+                    <View key={index} style={styles.specialtyTag}>
+                      <Text style={styles.specialtyText}>{spec}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.infoValue}>Não informadas</Text>
+              )}
             </View>
-            {professional.specialties && professional.specialties.length > 0 ? (
-              <View style={styles.specialtiesContainer}>
-                {professional.specialties.map((spec: string, index: number) => (
-                  <View key={index} style={styles.specialtyTag}>
-                    <Text style={styles.specialtyText}>{spec}</Text>
-                  </View>
+
+            {/* City */}
+            <View style={styles.infoRow}>
+              <MaterialIcons name="location-city" size={22} color="#1d3f5d" style={styles.icon} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.infoLabel}>Atende em</Text>
+                <Text style={styles.infoValue}>{professional.city || "Não informada"}</Text>
+              </View>
+            </View>
+
+            {/* Bio */}
+            <View style={styles.infoRowVertical}>
+              <View style={styles.infoRowHeader}>
+                <MaterialIcons name="info-outline" size={22} color="#1d3f5d" style={styles.icon} />
+                <Text style={styles.infoLabel}>Sobre</Text>
+              </View>
+              <Text style={[styles.infoValue, styles.bioText]}>
+                {professional.bio || "Nenhuma descrição fornecida."}
+              </Text>
+            </View>
+          </View>
+
+          {/* Recommendations Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recomendações</Text>
+            <View style={styles.recommendationStats}>
+              <FontAwesome name="thumbs-up" size={20} color="#1d3f5d" />
+              <Text style={styles.recommendationCount}>{recommendationCount} recomendações</Text>
+            </View>
+
+            {recommenders.length > 0 && (
+              <View style={{ marginTop: 16 }}>
+                <Text style={styles.recommendersLabel}>Quem recomendou:</Text>
+                {recommenders.map((item) => (
+                  <TouchableOpacity
+                    key={item.userId || item.id}
+                    onPress={() => router.push({ pathname: "../friend-profile", params: { friendId: item.userId || item.id } })}
+                    style={styles.recommenderRow}
+                  >
+                    <UserAvatar photoURL={item.photoURL} name={item.name} size={44} />
+                    <Text style={styles.recommenderName}>{item.name}</Text>
+                    <MaterialIcons name="chevron-right" size={20} color="#90A4AE" />
+                  </TouchableOpacity>
                 ))}
               </View>
-            ) : (
-              <Text style={styles.infoValue}>Não informadas</Text>
             )}
           </View>
-
-          <View style={styles.infoRow}>
-            <MaterialIcons name="location-city" size={24} color="#4F4F4F" style={styles.icon} />
-            <Text style={styles.infoLabel}>Atende em:</Text>
-            <Text style={styles.infoValue}>{professional.city || "Não informada"}</Text>
-          </View>
-
-          <View style={styles.infoRowVertical}>
-            <View style={styles.infoRowHeader}>
-              <MaterialIcons name="info-outline" size={24} color="#4F4F4F" style={styles.icon} />
-              <Text style={styles.infoLabel}>Sobre mim:</Text>
-            </View>
-            <Text style={[styles.infoValue, styles.bioText]}>
-              {professional.bio || "Nenhuma descrição adicional fornecida."}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recomendações</Text>
-          <View style={styles.infoRow}>
-            <FontAwesome name="thumbs-up" size={24} color="#1976D2" style={styles.icon} />
-            <Text style={styles.infoLabel}>Total de Recomendações:</Text>
-            <Text style={styles.infoValue}>{recommendationCount}</Text>
-          </View>
-
-          {/* Lista de quem recomendou - agora em lista vertical */}
-          {recommenders.length > 0 ? (
-            <View style={{ marginTop: 10 }}>
-              <Text style={[styles.infoLabel, { marginBottom: 8 }]}>Quem recomendou:</Text>
-              {recommenders.map((item) => (
-                <TouchableOpacity
-                  key={item.userId || item.id}
-                  onPress={() => router.push({ pathname: "../friend-profile", params: { friendId: item.userId || item.id } })}
-                  style={styles.recommenderRow}
-                >
-                  <UserAvatar photoURL={item.photoURL} name={item.name} size={40} />
-                  <Text style={styles.recommenderName}>{item.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.infoValue}>Ainda não há recomendações.</Text>
-          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -361,49 +380,90 @@ const ProfessionalProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#F5F5F5",
   },
   contentContainer: {
-    padding: 20,
+    paddingBottom: 40,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#F5F5F5",
+  },
+  headerBackground: {
+    width: "100%",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   profileHeader: {
     alignItems: "center",
-    marginBottom: 25,
   },
   name: {
     fontSize: 26,
-    fontWeight: "bold",
-    marginTop: 15,
-    color: "#1d3f5d",
+    fontWeight: "700",
+    marginTop: 16,
+    color: "#FFFFFF",
     textAlign: "center",
   },
-  section: {
+  headerActions: {
+    flexDirection: "row",
+    marginTop: 16,
+    gap: 12,
+  },
+  favoriteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  favoriteText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  contentCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    marginTop: -20,
+    marginHorizontal: 20,
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  ratingSection: {
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E6ED",
+  },
+  infoCard: {
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  section: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#E0E6ED",
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1d3f5d", // Cor de destaque para títulos de seção
-    marginBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-    paddingBottom: 10,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#263238",
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: "row",
@@ -411,7 +471,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   infoRowVertical: {
-    marginBottom: 15,
+    marginBottom: 16,
   },
   infoRowHeader: {
     flexDirection: "row",
@@ -422,63 +482,103 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   infoLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
-    color: "#555",
-    marginRight: 8,
+    color: "#607D8B",
+    marginBottom: 4,
   },
   infoValue: {
     fontSize: 16,
-    color: "#1C1C1E",
-    flexShrink: 1, // Para quebrar linha se necessário
+    color: "#263238",
+    lineHeight: 22,
   },
   linkText: {
-    color: "#007AFF",
-    textDecorationLine: "underline",
+    color: "#1d3f5d",
+    fontWeight: "600",
   },
   bioText: {
-    lineHeight: 24, // Melhorar legibilidade para textos longos
-    textAlign: 'justify',
+    lineHeight: 24,
+    textAlign: "left",
   },
   specialtiesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 5,
+    marginTop: 4,
   },
   specialtyTag: {
-    backgroundColor: "#1d3f5d", // updated to primary blue
-    borderRadius: 15,
+    backgroundColor: "#E3F2FD",
+    borderRadius: 12,
     paddingVertical: 6,
     paddingHorizontal: 12,
     marginRight: 8,
     marginBottom: 8,
   },
   specialtyText: {
-    color: "#FFFFFF", // white text for contrast
+    color: "#1d3f5d",
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 14,
-    borderRadius: 10,
-    marginBottom: 15,
+    borderRadius: 12,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.10,
-    shadowRadius: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
+    gap: 8,
   },
   buttonText: {
     color: "white",
-    fontWeight: "bold",
+    fontWeight: "600",
     fontSize: 16,
-    marginLeft: 10,
   },
   editButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#1d3f5d",
+  },
+  recommendButton: {
+    backgroundColor: "#4CAF50",
+  },
+  removeButton: {
+    backgroundColor: "#DC3545",
+  },
+  recommendationStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+  recommendationCount: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#263238",
+  },
+  recommendersLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#607D8B",
+    marginBottom: 12,
+  },
+  recommenderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
+    gap: 12,
+  },
+  recommenderName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#263238",
+  },
+});
   },
   recommendButton: {
     backgroundColor: "#28A745", // Verde para recomendar
