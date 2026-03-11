@@ -116,6 +116,12 @@ const HomeScreen = () => {
     router.push({ pathname: '/professional-profile', params: { id } });
   };
 
+  const getSectionTitle = () => {
+    if (activeFilters.maxDistance === 0 && userCity) return `Profissionais em ${userCity}`;
+    if (userCity) return `Profissionais perto de ${userCity}`;
+    return 'Profissionais em destaque';
+  };
+
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 20) {
@@ -179,13 +185,7 @@ const HomeScreen = () => {
         onSignOut={async () => { await signOut(auth); }}
       />
 
-      <Text style={styles.sectionTitle}>
-        {activeFilters.maxDistance === 0 && userCity
-          ? `Profissionais em ${userCity}`
-          : userCity
-            ? `Profissionais perto de ${userCity}`
-            : 'Profissionais em destaque'}
-      </Text>
+      <Text style={styles.sectionTitle}>{getSectionTitle()}</Text>
       <ProfessionalList
         professionals={professionals}
         favoriteIds={favoriteIds}

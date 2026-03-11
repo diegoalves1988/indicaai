@@ -72,7 +72,7 @@ export default function AdvancedFilters() {
 
   // Função para aplicar filtros e voltar para a home
   const applyFilters = () => {
-    // Construir parâmetros de consulta
+    // 'applied' marker signals to the home screen that filters were explicitly set
     const queryParams: Record<string, string> = { applied: '1' };
     
     if (filters.minRating !== null) {

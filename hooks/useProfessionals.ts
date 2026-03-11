@@ -141,20 +141,18 @@ export const useProfessionals = () => {
         return specs.some((s) => activeFilters.specialties.includes(s));
       });
     }
-    // Location-based filtering: maxDistance acts as location scope
-    // maxDistance === 0 means "same city only"
-    if (activeFilters.maxDistance === 0 && userCity) {
-      const normalizedUserCity = userCity.toLowerCase().trim();
-      data = data.filter((p) =>
-        p.city?.toLowerCase().trim() === normalizedUserCity
-      );
-    }
-    // Sort professionals: same city first, then others
-    if (userCity && activeFilters.maxDistance === null) {
-      const normalizedUserCity = userCity.toLowerCase().trim();
+
+    const normalizeCity = (city?: string) => city?.toLowerCase().trim() || '';
+    const normalizedUserCity = normalizeCity(userCity);
+
+    // maxDistance === 0: show only professionals in the user's city (strict filter)
+    // maxDistance === null: show all cities, but sort same-city professionals first
+    if (activeFilters.maxDistance === 0 && normalizedUserCity) {
+      data = data.filter((p) => normalizeCity(p.city) === normalizedUserCity);
+    } else if (normalizedUserCity && activeFilters.maxDistance === null) {
       data = [...data].sort((a, b) => {
-        const aMatch = a.city?.toLowerCase().trim() === normalizedUserCity ? 0 : 1;
-        const bMatch = b.city?.toLowerCase().trim() === normalizedUserCity ? 0 : 1;
+        const aMatch = normalizeCity(a.city) === normalizedUserCity ? 0 : 1;
+        const bMatch = normalizeCity(b.city) === normalizedUserCity ? 0 : 1;
         return aMatch - bMatch;
       });
     }
