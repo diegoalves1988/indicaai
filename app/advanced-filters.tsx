@@ -1,5 +1,4 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -9,18 +8,20 @@ interface FilterOptions {
   minRating: number | null;
   specialties: string[];
   maxDistance: number | null;
-  // Outros filtros podem ser adicionados aqui
 }
 
 export default function AdvancedFilters() {
   const router = useRouter();
   const params = useLocalSearchParams();
   
+  const userCity = params.userCity ? String(params.userCity) : '';
+  const userState = params.userState ? String(params.userState) : '';
+
   // Estado inicial dos filtros (pode ser preenchido com valores dos params)
   const [filters, setFilters] = useState<FilterOptions>({
     minRating: params.minRating ? Number(params.minRating) : null,
     specialties: params.specialties ? String(params.specialties).split(',') : [],
-    maxDistance: params.maxDistance ? Number(params.maxDistance) : null,
+    maxDistance: params.maxDistance !== undefined && params.maxDistance !== '' ? Number(params.maxDistance) : null,
   });
 
   // Lista de especialidades disponíveis (deve ser carregada do banco de dados)
@@ -36,14 +37,13 @@ export default function AdvancedFilters() {
     'Técnico de Ar Condicionado',
   ];
 
-  // Opções de distância
-  const distanceOptions = [
-    { label: 'Qualquer distância', value: null },
-    { label: 'Até 5 km', value: 5 },
-    { label: 'Até 10 km', value: 10 },
-    { label: 'Até 20 km', value: 20 },
-    { label: 'Até 50 km', value: 50 },
+  // Opções de localização
+  const locationOptions: { label: string; value: number | null }[] = [
+    { label: 'Todas as cidades', value: null },
   ];
+  if (userCity) {
+    locationOptions.push({ label: `Apenas ${userCity}`, value: 0 });
+  }
 
   // Opções de avaliação
   const ratingOptions = [
@@ -73,7 +73,7 @@ export default function AdvancedFilters() {
   // Função para aplicar filtros e voltar para a home
   const applyFilters = () => {
     // Construir parâmetros de consulta
-    const queryParams: Record<string, string> = {};
+    const queryParams: Record<string, string> = { applied: '1' };
     
     if (filters.minRating !== null) {
       queryParams.minRating = filters.minRating.toString();
@@ -163,19 +163,45 @@ export default function AdvancedFilters() {
           </View>
         </View>
 
-        {/* Seção de Distância */}
+        {/* Seção de Localização */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Distância Máxima</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={filters.maxDistance}
-              onValueChange={(value) => setFilters(prev => ({ ...prev, maxDistance: value }))}
-              style={styles.picker}
-            >
-              {distanceOptions.map((option, index) => (
-                <Picker.Item key={index} label={option.label} value={option.value} />
-              ))}
-            </Picker>
+          <Text style={styles.sectionTitle}>Localização</Text>
+          {userCity ? (
+            <View style={styles.locationInfo}>
+              <Ionicons name="location-sharp" size={16} color="#607D8B" />
+              <Text style={styles.locationInfoText}>Sua cidade: {userCity}{userState ? `, ${userState}` : ''}</Text>
+            </View>
+          ) : (
+            <View style={styles.locationInfo}>
+              <Ionicons name="location-outline" size={16} color="#999" />
+              <Text style={styles.locationInfoText}>Cadastre seu endereço no perfil para filtrar por cidade</Text>
+            </View>
+          )}
+          <View style={styles.locationOptions}>
+            {locationOptions.map((option, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.locationOption,
+                  filters.maxDistance === option.value && styles.selectedLocationOption,
+                ]}
+                onPress={() => setFilters(prev => ({ ...prev, maxDistance: option.value }))}
+              >
+                <Ionicons
+                  name={option.value === null ? 'globe-outline' : 'location-sharp'}
+                  size={18}
+                  color={filters.maxDistance === option.value ? '#FFFFFF' : '#4B5563'}
+                />
+                <Text
+                  style={[
+                    styles.locationOptionText,
+                    filters.maxDistance === option.value && styles.selectedLocationOptionText,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -293,16 +319,47 @@ const styles = StyleSheet.create({
   starIcon: {
     marginLeft: 2,
   },
-  pickerContainer: {
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+  },
+  locationInfoText: {
+    fontSize: 14,
+    color: '#607D8B',
+    flex: 1,
+  },
+  locationOptions: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  locationOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
     borderColor: '#D1D5DB',
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
-    overflow: 'hidden',
+    gap: 10,
   },
-  picker: {
-    height: 50,
-    width: '100%',
+  selectedLocationOption: {
+    borderColor: '#1d3f5d',
+    backgroundColor: '#1d3f5d',
+  },
+  locationOptionText: {
+    fontSize: 16,
+    color: '#4B5563',
+  },
+  selectedLocationOptionText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
   specialtiesContainer: {
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import { useAuth } from './useAuth';
 import { useCallback, useEffect, useState } from 'react';
 import { filterProfessionalsByRating, getProfessionals } from '../services/professionalService';
-import { addFavorite, getFavorites, removeFavorite } from '../services/userService';
+import { addFavorite, getFavorites, getUserProfile, removeFavorite } from '../services/userService';
 
 interface Professional {
   id: string;
@@ -37,6 +37,8 @@ export const useProfessionals = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [userCity, setUserCity] = useState<string>('');
+  const [userState, setUserState] = useState<string>('');
   const PAGE_SIZE = 10;
 
   useEffect(() => {
@@ -47,6 +49,15 @@ export const useProfessionals = () => {
           getProfessionals(PAGE_SIZE),
           user ? getFavorites(user.uid) : [],
         ]);
+
+        // Load user profile for city/state info
+        if (user) {
+          const profile = await getUserProfile(user.uid);
+          if (profile?.address) {
+            setUserCity(profile.address.city || '');
+            setUserState(profile.address.state || '');
+          }
+        }
 
         setProfessionals(profResult.professionals);
         setFilteredProfessionals(profResult.professionals);
@@ -130,8 +141,25 @@ export const useProfessionals = () => {
         return specs.some((s) => activeFilters.specialties.includes(s));
       });
     }
+    // Location-based filtering: maxDistance acts as location scope
+    // maxDistance === 0 means "same city only"
+    if (activeFilters.maxDistance === 0 && userCity) {
+      const normalizedUserCity = userCity.toLowerCase().trim();
+      data = data.filter((p) =>
+        p.city?.toLowerCase().trim() === normalizedUserCity
+      );
+    }
+    // Sort professionals: same city first, then others
+    if (userCity && activeFilters.maxDistance === null) {
+      const normalizedUserCity = userCity.toLowerCase().trim();
+      data = [...data].sort((a, b) => {
+        const aMatch = a.city?.toLowerCase().trim() === normalizedUserCity ? 0 : 1;
+        const bMatch = b.city?.toLowerCase().trim() === normalizedUserCity ? 0 : 1;
+        return aMatch - bMatch;
+      });
+    }
     setFilteredProfessionals(data);
-  }, [searchQuery, activeFilters, professionals]);
+  }, [searchQuery, activeFilters, professionals, userCity]);
 
   const clearFilters = useCallback(() => {
     setActiveFilters({ minRating: null, specialties: [], maxDistance: null });
@@ -152,6 +180,8 @@ export const useProfessionals = () => {
     loadMoreProfessionals,
     hasMore: !!lastDoc,
     loadingMore,
+    userCity,
+    userState,
   };
 };
 

@@ -432,26 +432,29 @@ function UserProfileScreen() {
           <>
             <Text style={styles.sectionTitle}>Perfil Profissional</Text>
             <TouchableOpacity
-              style={[styles.button, styles.professionalButton]}
+              style={styles.outlineButton}
               onPress={navigateToEditProfessionalProfile}
             >
-              <Text style={styles.buttonText}>Editar Perfil Profissional</Text>
+              <Ionicons name="create-outline" size={18} color="#1d3f5d" />
+              <Text style={styles.outlineButtonText}>Editar Perfil Profissional</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, styles.deleteButton]}
+              style={styles.dangerTextButton}
               onPress={handleDeleteProfessionalProfile}
             >
-              <Text style={styles.buttonText}>Excluir Perfil Profissional</Text>
+              <Ionicons name="trash-outline" size={16} color="#999" />
+              <Text style={styles.dangerTextButtonText}>Excluir Perfil Profissional</Text>
             </TouchableOpacity>
           </>
         )}
 
         <Text style={styles.sectionTitle}>Configurações da Conta</Text>
         <TouchableOpacity
-          style={[styles.button, styles.deleteAccountButton]}
+          style={styles.dangerTextButton}
           onPress={handleDeleteAccount}
         >
-          <Text style={styles.buttonText}>Excluir Conta</Text>
+          <Ionicons name="close-circle-outline" size={16} color="#999" />
+          <Text style={styles.dangerTextButtonText}>Excluir Conta</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -577,6 +580,36 @@ const styles = StyleSheet.create({
   deleteAccountButton: {
     backgroundColor: "#DC3545",
     marginTop: 12,
+  },
+  outlineButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#1d3f5d",
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 12,
+    gap: 8,
+    backgroundColor: "#FFFFFF",
+  },
+  outlineButtonText: {
+    color: "#1d3f5d",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  dangerTextButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    marginTop: 8,
+    gap: 6,
+  },
+  dangerTextButtonText: {
+    color: "#999",
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
 

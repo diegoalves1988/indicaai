@@ -82,7 +82,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
               Filtros ativos:
               {activeFilters.minRating !== null && ` ${activeFilters.minRating}+ estrelas`}
               {activeFilters.specialties.length > 0 && ` ${activeFilters.specialties.length} especialidades`}
-              {activeFilters.maxDistance !== null && ` ${activeFilters.maxDistance}km`}
+              {activeFilters.maxDistance === 0 && ' minha cidade'}
             </Text>
             <TouchableOpacity onPress={onClearFilters} style={styles.clearFiltersButton}>
               <Text style={styles.clearFiltersText}>Limpar</Text>
