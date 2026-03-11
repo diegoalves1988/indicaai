@@ -26,6 +26,7 @@
 - Excluir conta do usuário
 
 [Detalhes do escopo](/docs/scope.md)  
+[Publicar na Play Store](/docs/publishing-play-store.md)  
 
 ## 🚀 Como Usar
 1. Clone o repositório:
