@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
 
 import HomeHeader from '../../components/home/HomeHeader';
@@ -19,6 +19,7 @@ interface SuggestedFriend {
 
 const HomeScreen = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [suggestedFriends, setSuggestedFriends] = useState<SuggestedFriend[]>([]);
@@ -43,6 +44,8 @@ const HomeScreen = () => {
     loadMoreProfessionals,
     hasMore,
     loadingMore,
+    userCity,
+    userState,
   } = useProfessionals();
 
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
@@ -57,6 +60,17 @@ const HomeScreen = () => {
       router.replace('/');
     }
   }, [user, authLoading, router]);
+
+  // Apply filters from URL params (coming back from advanced-filters)
+  useEffect(() => {
+    if (params.applied) {
+      setActiveFilters({
+        minRating: params.minRating ? Number(params.minRating) : null,
+        specialties: params.specialties ? String(params.specialties).split(',') : [],
+        maxDistance: params.maxDistance !== undefined && params.maxDistance !== '' ? Number(params.maxDistance) : null,
+      });
+    }
+  }, [params.applied, params.minRating, params.specialties, params.maxDistance]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -100,6 +114,12 @@ const HomeScreen = () => {
 
   const handlePressProfessional = (id: string) => {
     router.push({ pathname: '/professional-profile', params: { id } });
+  };
+
+  const getSectionTitle = () => {
+    if (activeFilters.maxDistance === 0 && userCity) return `Profissionais em ${userCity}`;
+    if (userCity) return `Profissionais perto de ${userCity}`;
+    return 'Profissionais em destaque';
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -149,7 +169,15 @@ const HomeScreen = () => {
         onChangeSearch={setSearchQuery}
         hasActiveFilters={hasActiveFilters}
         activeFilters={activeFilters}
-        onPressFilters={() => router.push('/advanced-filters')}
+        onPressFilters={() => {
+          const filterParams: Record<string, string> = {};
+          if (activeFilters.minRating !== null) filterParams.minRating = String(activeFilters.minRating);
+          if (activeFilters.specialties.length > 0) filterParams.specialties = activeFilters.specialties.join(',');
+          if (activeFilters.maxDistance !== null) filterParams.maxDistance = String(activeFilters.maxDistance);
+          if (userCity) filterParams.userCity = userCity;
+          if (userState) filterParams.userState = userState;
+          router.push({ pathname: '/advanced-filters', params: filterParams });
+        }}
         onClearFilters={handleClearFilters}
         topSpecialties={topSpecialties}
         selectedSpecialty={selectedSpecialty}
@@ -157,7 +185,7 @@ const HomeScreen = () => {
         onSignOut={async () => { await signOut(auth); }}
       />
 
-      <Text style={styles.sectionTitle}>Profissionais em destaque</Text>
+      <Text style={styles.sectionTitle}>{getSectionTitle()}</Text>
       <ProfessionalList
         professionals={professionals}
         favoriteIds={favoriteIds}

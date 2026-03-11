@@ -300,8 +300,8 @@ const ProfessionalProfileScreen = () => {
 
           {user && user.uid !== professional.userId && isRecommended && (
             <TouchableOpacity style={[styles.button, styles.removeButton]} onPress={handleRemoveRecommendation}>
-              <FontAwesome name="thumbs-down" size={18} color="white" />
-              <Text style={styles.buttonText}>Remover Indicação</Text>
+              <FontAwesome name="thumbs-down" size={18} color="#DC3545" />
+              <Text style={styles.removeButtonText}>Remover Indicação</Text>
             </TouchableOpacity>
           )}
 
@@ -553,7 +553,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#4CAF50",
   },
   removeButton: {
-    backgroundColor: "#DC3545",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#DC3545",
+  },
+  removeButtonText: {
+    color: "#DC3545",
+    fontWeight: "600",
+    fontSize: 16,
   },
   recommendationStats: {
     flexDirection: "row",
