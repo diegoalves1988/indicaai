@@ -6,8 +6,8 @@ Este guia descreve o passo a passo para publicar o **indicaai** na Google Play S
 
 ## Pré-requisitos
 
-- Conta no [Expo](https://expo.dev) (logado via `eas login`)
-- Conta de desenvolvedor na [Google Play Console](https://play.google.com/console) (taxa única de US$ 25)
+- [x] Conta no [Expo](https://expo.dev) (logado via `eas login`)
+- [x] Conta de desenvolvedor na [Google Play Console](https://play.google.com/console) ✅
 - Node.js e EAS CLI instalados:
   ```bash
   npm install -g eas-cli
@@ -47,12 +47,53 @@ O EAS irá:
 
 1. Acesse [Google Play Console](https://play.google.com/console)
 2. Clique em **Criar app**
-3. Preencha nome, idioma padrão, tipo (app/jogo) e se é pago/gratuito
-4. Aceite as políticas do desenvolvedor
+3. Preencha:
+   - **Nome do app**: `indicaai`
+   - **Idioma padrão**: Português (Brasil)
+   - **Tipo**: App
+   - **Gratuito ou pago**: Gratuito
+4. Aceite as políticas do desenvolvedor e clique em **Criar app**
 
 ---
 
-## Passo 4 – Preencher as Informações do App
+## Passo 4 – Criar a Chave de Conta de Serviço da API do Google Play
+
+O EAS Submit precisa de uma chave de serviço para enviar o AAB automaticamente. Siga os passos abaixo:
+
+### 4.1 – Vincular um projeto do Google Cloud
+
+1. No Play Console, vá em **Configurações → Acesso à API**
+2. Clique em **Vincular a um projeto do Google Cloud**
+3. Crie um novo projeto ou vincule um existente
+
+### 4.2 – Criar a conta de serviço
+
+1. Na mesma tela, clique em **Criar nova conta de serviço**
+2. Siga o link para o **Google Cloud Console** que aparece na janela
+3. Clique em **+ Criar conta de serviço**
+4. Preencha o nome (ex: `eas-submit`) e clique em **Criar e continuar**
+5. Atribua o papel **Editor** e clique em **Continuar → Concluir**
+
+### 4.3 – Gerar a chave JSON
+
+1. Na lista de contas de serviço, clique nos três pontos (⋮) da conta criada → **Gerenciar chaves**
+2. Clique em **Adicionar chave → Criar nova chave → JSON → Criar**
+3. O arquivo JSON será baixado automaticamente
+4. **Renomeie o arquivo para `google-play-service-account.json`** e coloque na raiz do projeto (mesmo diretório que o `eas.json`)
+5. Esse arquivo já está no `.gitignore` — **nunca o commite no repositório**
+
+### 4.4 – Conceder permissão no Play Console
+
+1. Volte ao Play Console → **Configurações → Acesso à API**
+2. Na lista de contas de serviço, clique em **Conceder acesso** ao lado da conta criada
+3. Atribua no mínimo as permissões:
+   - **Gerenciar versões de produção**
+   - **Gerenciar faixas de teste**
+4. Clique em **Convidar usuário → Aplicar**
+
+---
+
+## Passo 5 – Preencher as Informações do App
 
 Na seção **Presença na Play Store**, preencha:
 
@@ -66,22 +107,22 @@ Na seção **Presença na Play Store**, preencha:
 
 ---
 
-## Passo 5 – Criar uma Release e Enviar o AAB
+## Passo 6 – Criar uma Release e Enviar o AAB
 
 1. No Play Console, vá em **Produção → Criar nova versão**
 2. Faça upload do arquivo `.aab` gerado no Passo 2
 3. Preencha as **notas de versão** (o que há de novo)
 4. Clique em **Revisar versão**
 
-> **Alternativa via EAS Submit**: após o build, você também pode enviar diretamente pelo EAS:
+> **Recomendado – envio via EAS Submit**: com a chave de serviço configurada (Passo 4) e o `eas.json` já atualizado, basta rodar:
 > ```bash
 > eas submit --platform android --profile production
 > ```
-> Você precisará fornecer uma chave de API do Google Play. Veja como gerar em [Expo EAS Submit – Android](https://docs.expo.dev/submit/android/).
+> O EAS irá usar o `google-play-service-account.json` e enviar o último build de produção automaticamente para a faixa `production` da Play Store.
 
 ---
 
-## Passo 6 – Revisão e Publicação
+## Passo 7 – Revisão e Publicação
 
 1. Revise todos os itens indicados pelo Play Console (ícone, capturas de tela, classificação, etc.)
 2. Clique em **Iniciar lançamento para produção**
@@ -95,7 +136,7 @@ Na seção **Presença na Play Store**, preencha:
 Para publicar novas versões do app:
 
 1. O `versionCode` é incrementado automaticamente pelo EAS (`"autoIncrement": true` no `eas.json`)
-2. Repita os Passos 2, 5 e 6 para cada nova versão
+2. Repita os Passos 2 e 6 para cada nova versão
 3. Para updates sem novo build nativo (apenas JS), utilize o **EAS Update**:
    ```bash
    eas update --channel production --message "Descrição da atualização"
