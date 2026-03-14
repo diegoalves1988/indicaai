@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excluir Minha Conta – IndicaAí</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.7;
+    }
+    header {
+      background: #1565C0;
+      color: #fff;
+      padding: 24px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
+    .container {
+      max-width: 800px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 40px 32px;
+    }
+    h2 { font-size: 1.15rem; color: #1565C0; margin: 28px 0 10px; }
+    p, li { font-size: 0.97rem; color: #444; margin-bottom: 8px; }
+    ul { padding-left: 20px; margin-bottom: 8px; }
+    a { color: #1565C0; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 24px;
+      color: #1565C0;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .warning {
+      background: #fff3e0;
+      border-left: 4px solid #f57c00;
+      border-radius: 4px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .warning p { color: #6d4c00; margin: 0; }
+    .steps {
+      counter-reset: step-counter;
+      list-style: none;
+      padding: 0;
+    }
+    .steps li {
+      counter-increment: step-counter;
+      padding: 12px 12px 12px 48px;
+      position: relative;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #f0f7ff;
+    }
+    .steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1565C0;
+      color: #fff;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .form-section {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      padding: 28px;
+      margin-top: 24px;
+    }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; color: #333; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.97rem;
+      font-family: inherit;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #1565C0;
+      box-shadow: 0 0 0 3px rgba(21,101,192,0.12);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .btn-submit {
+      background: #d32f2f;
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #b71c1c; }
+    .success-msg {
+      display: none;
+      background: #e8f5e9;
+      border: 1px solid #4caf50;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 16px;
+      color: #2e7d32;
+    }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Excluir Minha Conta e Dados</h1>
+    <p>IndicaAí – Plataforma de indicação de profissionais</p>
+  </header>
+
+  <div class="container">
+    <a class="back-link" href="/index.html">← Voltar</a>
+
+    <p>
+      No IndicaAí, respeitamos o seu direito à privacidade e ao controle sobre seus dados pessoais.
+      Você pode solicitar a exclusão completa da sua conta e de todos os seus dados a qualquer momento,
+      conforme descrito abaixo.
+    </p>
+
+    <div class="warning">
+      <p>
+        ⚠️ <strong>Atenção:</strong> A exclusão da conta é permanente e irreversível.
+        Todos os dados associados à sua conta serão removidos de nossos sistemas em até 30 dias.
+      </p>
+    </div>
+
+    <h2>Dados que serão excluídos</h2>
+    <ul>
+      <li>Informações do perfil: nome, telefone, foto e endereço.</li>
+      <li>Perfil profissional e especialidades (se cadastrado).</li>
+      <li>Avaliações e indicações feitas ou recebidas.</li>
+      <li>Lista de amigos e favoritos.</li>
+      <li>Credenciais de autenticação (e-mail, senha ou conta Google vinculada).</li>
+    </ul>
+
+    <h2>Como excluir sua conta pelo aplicativo</h2>
+    <p>A maneira mais rápida de excluir sua conta é diretamente pelo aplicativo IndicaAí:</p>
+    <ol class="steps">
+      <li>Abra o aplicativo IndicaAí e faça login na sua conta.</li>
+      <li>Acesse a aba <strong>Perfil</strong> no menu inferior.</li>
+      <li>Toque em <strong>Configurações</strong> (ícone de engrenagem).</li>
+      <li>Role até o final da página e selecione <strong>Excluir Conta</strong>.</li>
+      <li>Confirme a exclusão digitando sua senha ou autenticando com o Google.</li>
+    </ol>
+
+    <h2>Solicitar exclusão por este formulário</h2>
+    <p>
+      Se você não conseguir acessar o aplicativo, preencha o formulário abaixo.
+      Processaremos sua solicitação em até <strong>7 dias úteis</strong> e confirmaremos
+      a exclusão pelo e-mail informado.
+    </p>
+
+    <div class="form-section">
+      <form id="deleteForm">
+        <div class="form-group">
+          <label for="email">E-mail cadastrado na conta *</label>
+          <input type="email" id="email" name="email" placeholder="seu@email.com" required />
+        </div>
+        <div class="form-group">
+          <label for="reason">Motivo da exclusão (opcional)</label>
+          <select id="reason" name="reason">
+            <option value="">Selecione um motivo</option>
+            <option value="not_using">Não uso mais o aplicativo</option>
+            <option value="privacy">Preocupações com privacidade</option>
+            <option value="other_app">Migrando para outro serviço</option>
+            <option value="other">Outro motivo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="message">Informações adicionais (opcional)</label>
+          <textarea id="message" name="message" placeholder="Descreva sua solicitação, se necessário..."></textarea>
+        </div>
+        <button type="submit" class="btn-submit">Solicitar Exclusão da Minha Conta</button>
+      </form>
+      <div class="success-msg" id="successMsg">
+        ✅ <strong>Solicitação recebida!</strong> Entraremos em contato pelo e-mail informado em até 7 dias úteis para confirmar a exclusão.
+      </div>
+    </div>
+
+    <h2>Contato direto</h2>
+    <p>
+      Caso prefira, envie um e-mail diretamente para:
+      <a href="mailto:contato.indicaai@gmail.com">contato.indicaai@gmail.com</a>
+      com o assunto <strong>"Solicitação de Exclusão de Conta"</strong> e o e-mail associado à sua conta.
+    </p>
+  </div>
+
+  <footer>© 2025 IndicaAí. Todos os direitos reservados. | <a href="/privacy-policy.html">Política de Privacidade</a></footer>
+
+  <script>
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      if (!email) return;
+
+      const subject = encodeURIComponent('Solicitação de Exclusão de Conta – IndicaAí');
+      const reason = document.getElementById('reason').value;
+      const message = document.getElementById('message').value.trim();
+      const body = encodeURIComponent(
+        'E-mail da conta: ' + email + '\n' +
+        (reason ? 'Motivo: ' + reason + '\n' : '') +
+        (message ? 'Informações adicionais: ' + message + '\n' : '') +
+        '\nPor favor, exclua minha conta e todos os meus dados do IndicaAí.'
+      );
+
+      window.location.href = 'mailto:contato.indicaai@gmail.com?subject=' + subject + '&body=' + body;
+
+      document.getElementById('deleteForm').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
