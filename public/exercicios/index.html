@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exercícios – Pensar Exatas</title>
+  <meta name="description" content="Pratique matemática e ciências exatas com nossa coleção de exercícios resolvidos. Álgebra, geometria, cálculo, física e química para todos os níveis." />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.7;
+    }
+    header {
+      background: #1565C0;
+      color: #fff;
+      padding: 24px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 40px 32px;
+    }
+    h2 {
+      font-size: 1.2rem;
+      color: #1565C0;
+      margin: 32px 0 12px;
+    }
+    h3 {
+      font-size: 1rem;
+      color: #333;
+      margin: 16px 0 6px;
+      font-weight: 600;
+    }
+    p, li { font-size: 0.97rem; color: #444; margin-bottom: 8px; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    a { color: #1565C0; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 24px;
+      color: #1565C0;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 20px 0 32px;
+    }
+    .category-card {
+      background: #e3f0fd;
+      border: 1px solid #bbdefb;
+      border-radius: 10px;
+      padding: 20px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      display: block;
+    }
+    .category-card:hover {
+      background: #bbdefb;
+      box-shadow: 0 4px 12px rgba(21,101,192,0.12);
+    }
+    .category-card .icon { font-size: 2rem; margin-bottom: 8px; }
+    .category-card .title {
+      font-size: 0.97rem;
+      font-weight: 600;
+      color: #1565C0;
+    }
+    .category-card .count {
+      font-size: 0.82rem;
+      color: #666;
+      margin-top: 4px;
+    }
+    .exercise-block {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .exercise-block .label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #1565C0;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .exercise-block .question {
+      font-size: 1rem;
+      color: #333;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .exercise-block .options { padding-left: 0; list-style: none; }
+    .exercise-block .options li {
+      padding: 6px 12px;
+      border-radius: 5px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      border: 1px solid #e0e0e0;
+      transition: background 0.15s;
+    }
+    .exercise-block .options li:hover { background: #e3f0fd; border-color: #90caf9; }
+    .exercise-block .options li.correct { background: #e8f5e9; border-color: #a5d6a7; color: #2e7d32; }
+    .exercise-block .options li.wrong { background: #ffebee; border-color: #ef9a9a; color: #c62828; }
+    .show-answer-btn {
+      background: none;
+      border: 1px solid #1565C0;
+      color: #1565C0;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s;
+    }
+    .show-answer-btn:hover { background: #e3f0fd; }
+    .answer-box {
+      display: none;
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 10px;
+      color: #2e7d32;
+      font-size: 0.95rem;
+    }
+    .difficulty-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .difficulty-badge.facil { background: #e8f5e9; color: #2e7d32; }
+    .difficulty-badge.medio { background: #fff8e1; color: #f57f17; }
+    .difficulty-badge.dificil { background: #ffebee; color: #c62828; }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Exercícios</h1>
+    <p>Pensar Exatas – Matemática e Ciências Exatas</p>
+  </header>
+
+  <div class="container">
+    <a class="back-link" href="/">← Voltar ao início</a>
+
+    <p>
+      Pratique e aprimore seus conhecimentos em matemática e ciências exatas com nossa coleção de exercícios
+      resolvidos e comentados. Escolha uma área abaixo para começar.
+    </p>
+
+    <h2>Categorias de Exercícios</h2>
+    <div class="category-grid">
+      <a class="category-card" href="#algebra">
+        <div class="icon">📐</div>
+        <div class="title">Álgebra</div>
+        <div class="count">Equações e expressões</div>
+      </a>
+      <a class="category-card" href="#geometria">
+        <div class="icon">📏</div>
+        <div class="title">Geometria</div>
+        <div class="count">Plana e espacial</div>
+      </a>
+      <a class="category-card" href="#aritmetica">
+        <div class="icon">🔢</div>
+        <div class="title">Aritmética</div>
+        <div class="count">Números e operações</div>
+      </a>
+      <a class="category-card" href="#trigonometria">
+        <div class="icon">📊</div>
+        <div class="title">Trigonometria</div>
+        <div class="count">Seno, cosseno e tangente</div>
+      </a>
+      <a class="category-card" href="#fisica">
+        <div class="icon">⚡</div>
+        <div class="title">Física</div>
+        <div class="count">Mecânica e eletricidade</div>
+      </a>
+      <a class="category-card" href="#quimica">
+        <div class="icon">🧪</div>
+        <div class="title">Química</div>
+        <div class="count">Reações e estequiometria</div>
+      </a>
+    </div>
+
+    <h2 id="algebra">Álgebra <span class="difficulty-badge facil">Fácil</span></h2>
+
+    <div class="exercise-block">
+      <div class="label">Exercício 1 – Equação do 1º grau</div>
+      <div class="question">Resolva a equação: 3x + 7 = 22. Qual é o valor de x?</div>
+      <ul class="options">
+        <li>a) x = 3</li>
+        <li>b) x = 4</li>
+        <li class="correct">c) x = 5</li>
+        <li>d) x = 6</li>
+      </ul>
+      <button class="show-answer-btn" onclick="toggleAnswer(this)">Ver resolução</button>
+      <div class="answer-box">
+        <strong>Resolução:</strong><br>
+        3x + 7 = 22<br>
+        3x = 22 − 7<br>
+        3x = 15<br>
+        x = 15 ÷ 3<br>
+        <strong>x = 5</strong> ✓
+      </div>
+    </div>
+
+    <div class="exercise-block">
+      <div class="label">Exercício 2 – Equação do 2º grau <span class="difficulty-badge medio">Médio</span></div>
+      <div class="question">Quais são as raízes da equação x² − 5x + 6 = 0?</div>
+      <ul class="options">
+        <li>a) x = 1 e x = 6</li>
+        <li class="correct">b) x = 2 e x = 3</li>
+        <li>c) x = −2 e x = −3</li>
+        <li>d) x = 1 e x = 5</li>
+      </ul>
+      <button class="show-answer-btn" onclick="toggleAnswer(this)">Ver resolução</button>
+      <div class="answer-box">
+        <strong>Resolução (fatoração):</strong><br>
+        x² − 5x + 6 = 0<br>
+        Buscamos dois números cuja soma seja −5 e produto 6: −2 e −3.<br>
+        (x − 2)(x − 3) = 0<br>
+        <strong>x = 2 ou x = 3</strong> ✓
+      </div>
+    </div>
+
+    <h2 id="geometria">Geometria <span class="difficulty-badge facil">Fácil</span></h2>
+
+    <div class="exercise-block">
+      <div class="label">Exercício 3 – Área do triângulo</div>
+      <div class="question">Um triângulo tem base igual a 8 cm e altura igual a 5 cm. Qual é a sua área?</div>
+      <ul class="options">
+        <li>a) 13 cm²</li>
+        <li class="correct">b) 20 cm²</li>
+        <li>c) 40 cm²</li>
+        <li>d) 80 cm²</li>
+      </ul>
+      <button class="show-answer-btn" onclick="toggleAnswer(this)">Ver resolução</button>
+      <div class="answer-box">
+        <strong>Resolução:</strong><br>
+        Área do triângulo = (base × altura) ÷ 2<br>
+        Área = (8 × 5) ÷ 2<br>
+        Área = 40 ÷ 2<br>
+        <strong>Área = 20 cm²</strong> ✓
+      </div>
+    </div>
+
+    <h2 id="aritmetica">Aritmética <span class="difficulty-badge facil">Fácil</span></h2>
+
+    <div class="exercise-block">
+      <div class="label">Exercício 4 – Porcentagem</div>
+      <div class="question">Qual é 15% de 200?</div>
+      <ul class="options">
+        <li>a) 20</li>
+        <li>b) 25</li>
+        <li class="correct">c) 30</li>
+        <li>d) 35</li>
+      </ul>
+      <button class="show-answer-btn" onclick="toggleAnswer(this)">Ver resolução</button>
+      <div class="answer-box">
+        <strong>Resolução:</strong><br>
+        15% de 200 = (15 ÷ 100) × 200<br>
+        = 0,15 × 200<br>
+        <strong>= 30</strong> ✓
+      </div>
+    </div>
+
+    <h2 id="trigonometria">Trigonometria <span class="difficulty-badge medio">Médio</span></h2>
+
+    <div class="exercise-block">
+      <div class="label">Exercício 5 – Valores notáveis</div>
+      <div class="question">Qual é o valor de sen(30°)?</div>
+      <ul class="options">
+        <li>a) √3/2</li>
+        <li class="correct">b) 1/2</li>
+        <li>c) √2/2</li>
+        <li>d) 1</li>
+      </ul>
+      <button class="show-answer-btn" onclick="toggleAnswer(this)">Ver resolução</button>
+      <div class="answer-box">
+        <strong>Resolução:</strong><br>
+        Os valores notáveis de seno são:<br>
+        • sen(0°) = 0<br>
+        • sen(30°) = <strong>1/2 = 0,5</strong><br>
+        • sen(45°) = √2/2 ≈ 0,707<br>
+        • sen(60°) = √3/2 ≈ 0,866<br>
+        • sen(90°) = 1<br>
+        <strong>Resposta: 1/2</strong> ✓
+      </div>
+    </div>
+
+    <h2 id="fisica">Física <span class="difficulty-badge medio">Médio</span></h2>
+
+    <div class="exercise-block">
+      <div class="label">Exercício 6 – Velocidade média</div>
+      <div class="question">Um carro percorre 120 km em 2 horas. Qual é a sua velocidade média?</div>
+      <ul class="options">
+        <li>a) 40 km/h</li>
+        <li>b) 50 km/h</li>
+        <li class="correct">c) 60 km/h</li>
+        <li>d) 80 km/h</li>
+      </ul>
+      <button class="show-answer-btn" onclick="toggleAnswer(this)">Ver resolução</button>
+      <div class="answer-box">
+        <strong>Resolução:</strong><br>
+        Velocidade média (v) = distância (d) ÷ tempo (t)<br>
+        v = 120 km ÷ 2 h<br>
+        <strong>v = 60 km/h</strong> ✓
+      </div>
+    </div>
+
+    <h2 id="quimica">Química <span class="difficulty-badge dificil">Difícil</span></h2>
+
+    <div class="exercise-block">
+      <div class="label">Exercício 7 – Estequiometria</div>
+      <div class="question">Na reação H₂ + ½O₂ → H₂O, quantas moléculas de água são formadas a partir de 4 moléculas de H₂ (com excesso de O₂)?</div>
+      <ul class="options">
+        <li>a) 2 moléculas</li>
+        <li>b) 3 moléculas</li>
+        <li class="correct">c) 4 moléculas</li>
+        <li>d) 8 moléculas</li>
+      </ul>
+      <button class="show-answer-btn" onclick="toggleAnswer(this)">Ver resolução</button>
+      <div class="answer-box">
+        <strong>Resolução:</strong><br>
+        A equação balanceada é: 2H₂ + O₂ → 2H₂O<br>
+        Proporção: 2 moléculas de H₂ produzem 2 moléculas de H₂O (relação 1:1).<br>
+        Portanto, 4 moléculas de H₂ produzem <strong>4 moléculas de H₂O</strong> ✓
+      </div>
+    </div>
+
+    <p style="margin-top: 32px; color: #888; font-size: 0.9rem;">
+      Mais exercícios em breve. Tem sugestões de temas? <a href="/contato">Entre em contato</a>.
+    </p>
+  </div>
+
+  <footer>© 2025 Pensar Exatas. Todos os direitos reservados.</footer>
+
+  <script>
+    function toggleAnswer(btn) {
+      const answerBox = btn.nextElementSibling;
+      if (answerBox.style.display === 'block') {
+        answerBox.style.display = 'none';
+        btn.textContent = 'Ver resolução';
+      } else {
+        answerBox.style.display = 'block';
+        btn.textContent = 'Ocultar resolução';
+      }
+    }
+  </script>
+</body>
+</html>

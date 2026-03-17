@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contato – Pensar Exatas</title>
+  <meta name="description" content="Entre em contato com a equipe do Pensar Exatas. Tire suas dúvidas, envie sugestões ou reporte problemas pelo e-mail ou formulário de contato." />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.7;
+    }
+    header {
+      background: #1565C0;
+      color: #fff;
+      padding: 24px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
+    .container {
+      max-width: 800px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 40px 32px;
+    }
+    h2 {
+      font-size: 1.15rem;
+      color: #1565C0;
+      margin: 28px 0 10px;
+    }
+    p, li { font-size: 0.97rem; color: #444; margin-bottom: 8px; }
+    ul { padding-left: 20px; margin-bottom: 8px; }
+    a { color: #1565C0; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 24px;
+      color: #1565C0;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .contact-card {
+      background: #e3f0fd;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin: 24px 0;
+    }
+    .contact-card p { margin-bottom: 6px; }
+    form { margin-top: 24px; }
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.97rem;
+      font-family: inherit;
+      color: #333;
+      background: #fafafa;
+    }
+    textarea { resize: vertical; min-height: 140px; }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #1565C0;
+      background: #fff;
+    }
+    .btn-submit {
+      background: #1565C0;
+      color: #fff;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #0d47a1; }
+    .success-msg {
+      display: none;
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      color: #2e7d32;
+    }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Contato</h1>
+    <p>Pensar Exatas – Matemática e Ciências Exatas</p>
+  </header>
+
+  <div class="container">
+    <a class="back-link" href="/">← Voltar ao início</a>
+
+    <p>
+      Tem dúvidas, sugestões ou encontrou algum problema? Entre em contato com nossa equipe.
+      Respondemos todas as mensagens em até 2 dias úteis.
+    </p>
+
+    <h2>Fale Conosco pelo E-mail</h2>
+    <div class="contact-card">
+      <p>📧 <strong>E-mail:</strong> <a href="mailto:contato.pensarexatas@gmail.com">contato.pensarexatas@gmail.com</a></p>
+      <p>⏰ <strong>Horário de atendimento:</strong> Segunda a Sexta, das 9h às 18h</p>
+      <p>📍 <strong>Localização:</strong> Brasil</p>
+    </div>
+
+    <h2>Envie uma Mensagem</h2>
+    <form id="contactForm">
+      <div class="form-group">
+        <label for="name">Nome</label>
+        <input type="text" id="name" name="name" placeholder="Seu nome completo" required />
+      </div>
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" name="email" placeholder="seu@email.com" required />
+      </div>
+      <div class="form-group">
+        <label for="subject">Assunto</label>
+        <select id="subject" name="subject">
+          <option value="duvida">Dúvida sobre conteúdo</option>
+          <option value="sugestao">Sugestão</option>
+          <option value="problema">Reportar problema</option>
+          <option value="parceria">Parceria</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="message">Mensagem</label>
+        <textarea id="message" name="message" placeholder="Escreva sua mensagem aqui..." required></textarea>
+      </div>
+      <button type="submit" class="btn-submit">Enviar Mensagem</button>
+      <div class="success-msg" id="successMsg">
+        ✅ <strong>Mensagem enviada!</strong> Entraremos em contato em breve pelo e-mail informado.
+      </div>
+    </form>
+  </div>
+
+  <footer>© 2025 Pensar Exatas. Todos os direitos reservados.</footer>
+
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const subject = document.getElementById('subject').value;
+      const message = document.getElementById('message').value.trim();
+
+      if (!name || !email || !message) return;
+
+      const subjectMap = {
+        duvida: 'Dúvida sobre conteúdo',
+        sugestao: 'Sugestão',
+        problema: 'Reportar problema',
+        parceria: 'Parceria',
+        outro: 'Outro'
+      };
+
+      const mailSubject = encodeURIComponent('[Pensar Exatas] ' + subjectMap[subject]);
+      const mailBody = encodeURIComponent(
+        'Nome: ' + name + '\n' +
+        'E-mail: ' + email + '\n\n' +
+        message
+      );
+
+      window.location.href = 'mailto:contato.pensarexatas@gmail.com?subject=' + mailSubject + '&body=' + mailBody;
+
+      document.getElementById('successMsg').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
