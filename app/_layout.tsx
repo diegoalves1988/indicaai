@@ -1,8 +1,18 @@
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import Constants from 'expo-constants';
 import { Stack, useFocusEffect, useRouter, useSegments } from 'expo-router';
 import { useCallback } from 'react';
 import { ActivityIndicator, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
+
+const webClientId = (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string;
+
+if (webClientId) {
+  GoogleSignin.configure({ webClientId });
+} else {
+  console.warn('EXPO_PUBLIC_GOOGLE_CLIENT_ID is not set. Google Sign-In will not work.');
+}
 
 export default function RootLayout() {
   const { user, loading } = useAuth();
