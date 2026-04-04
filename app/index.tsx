@@ -1,8 +1,6 @@
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 import { FontAwesome } from "@expo/vector-icons";
-import * as Google from "expo-auth-session/providers/google";
-import Constants from "expo-constants";
 import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import {
   GoogleAuthProvider,
   signInWithCredential,
@@ -24,21 +22,10 @@ import {
 import * as yup from "yup";
 import { auth, db } from "../services/firebase";
 
-WebBrowser.maybeCompleteAuthSession();
-
 type FormData = { email: string; password: string };
 
 export default function Login() {
   const router = useRouter();
-
-  // ---- env do app.json (expo.extra) ----
-  const webClientId =
-    (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string;
-
-  // Guard de configuração (evita erro pedindo androidClientId)
-  if (!webClientId) {
-    console.log("extra =", Constants.expoConfig?.extra);
-  }
 
   // ---- validação com yup ----
   const schema = yup.object({
@@ -72,10 +59,45 @@ export default function Login() {
     },
   });
 
-  // ---- Google Auth (Expo Go usa 'clientId' com Web Client ID) ----
-  const [, , promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: webClientId, // NÃO usar androidClientId/iosClientId no Expo Go
-  });
+  // ---- Google Auth (Native Sign-In) ----
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+
+      if (!isSuccessResponse(response)) {
+        return;
+      }
+
+      const { idToken } = await GoogleSignin.getTokens();
+      if (!idToken) {
+        Alert.alert("Erro", "Não foi possível obter o token do Google.");
+        return;
+      }
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const { user } = await signInWithCredential(auth, credential);
+
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists() && snap.data().profileComplete) {
+        router.replace("/(tabs)/home");
+      } else {
+        router.replace("/complete-profile");
+      }
+    } catch (error: any) {
+      if (isErrorWithCode(error)) {
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+          return;
+        }
+        if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          Alert.alert("Erro", "Google Play Services não disponível.");
+          return;
+        }
+      }
+      console.error("Erro ao fazer login com Google:", error);
+      Alert.alert("Erro", "Não foi possível entrar com Google.");
+    }
+  };
 
   const handleLogin = async ({ email, password }: FormData) => {
     try {
@@ -93,37 +115,6 @@ export default function Login() {
       setError("password", {
         message: "Email ou senha incorretos. Por favor, tente novamente.",
       });
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      if (!webClientId) {
-        Alert.alert(
-          "Configuração faltando",
-          "Defina EXPO_PUBLIC_GOOGLE_CLIENT_ID em expo.extra no app.json."
-        );
-        return;
-      }
-
-      const result = await promptAsync();
-      if (result?.type !== "success" || !result.params?.id_token) {
-        Alert.alert("Erro", "Login com Google cancelado.");
-        return;
-      }
-
-      const credential = GoogleAuthProvider.credential(result.params.id_token);
-      const { user } = await signInWithCredential(auth, credential);
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists() && snap.data().profileComplete) {
-        router.replace("/(tabs)/home");
-      } else {
-        router.replace("/complete-profile");
-      }
-    } catch (error) {
-      console.error("Erro ao fazer login com Google:", error);
-      Alert.alert("Erro", "Não foi possível entrar com Google.");
     }
   };
 
