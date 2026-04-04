@@ -62,14 +62,14 @@ export default function Login() {
   // ---- Google Auth (Native Sign-In) ----
   const handleGoogleLogin = async () => {
     try {
-      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const response = await GoogleSignin.signIn();
 
       if (!isSuccessResponse(response)) {
         return;
       }
 
-      const { idToken } = await GoogleSignin.getTokens();
+      const idToken = response.data.idToken;
       if (!idToken) {
         Alert.alert("Erro", "Não foi possível obter o token do Google.");
         return;
@@ -90,7 +90,7 @@ export default function Login() {
           return;
         }
         if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-          Alert.alert("Erro", "Google Play Services não disponível.");
+          Alert.alert("Erro", "Google Play Services não está disponível ou precisa ser atualizado.");
           return;
         }
       }

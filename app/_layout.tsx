@@ -6,9 +6,13 @@ import { ActivityIndicator, Platform, StatusBar, StyleSheet, View } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../hooks/useAuth';
 
-GoogleSignin.configure({
-  webClientId: (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string,
-});
+const webClientId = (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string;
+
+if (webClientId) {
+  GoogleSignin.configure({ webClientId });
+} else {
+  console.warn('EXPO_PUBLIC_GOOGLE_CLIENT_ID is not set. Google Sign-In will not work.');
+}
 
 export default function RootLayout() {
   const { user, loading } = useAuth();
