@@ -72,23 +72,20 @@ export default function CompleteProfile() {
     return `${downloadURL}${downloadURL.includes("?") ? "&" : "?"}v=${Date.now()}`;
   };
 
-  const handleSaveProfile = async () => {
-    if (!name || !phone || !cep || !address.street || !address.city || !address.state) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
-      return;
-    }
+  const saveProfile = async (profileComplete: boolean) => {
     setSaving(true);
     try {
       const user = auth.currentUser;
       if (user) {
+        const hasAddress = cep && address.street && address.city && address.state;
         await updateDoc(doc(db, "users", user.uid), {
-          name,
-          phone,
+          name: name.trim() || null,
+          phone: phone.trim() || null,
           photoURL,
-          address: { ...address, cep },
-          profileComplete: true,
+          address: hasAddress ? { ...address, cep } : null,
+          profileComplete,
         });
-        router.replace("/home");
+        router.replace("/(tabs)/home");
       }
     } catch (error) {
       Alert.alert("Erro", "Falha ao salvar perfil");
@@ -97,9 +94,44 @@ export default function CompleteProfile() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!name.trim()) {
+      Alert.alert("Atenção", "Informe pelo menos seu nome para continuar.");
+      return;
+    }
+    await saveProfile(true);
+  };
+
+  const handleSkip = async () => {
+    const user = auth.currentUser;
+    if (user && name.trim()) {
+      try {
+        const hasAddress = cep && address.street && address.city && address.state;
+        await updateDoc(doc(db, "users", user.uid), {
+          name: name.trim(),
+          phone: phone.trim() || null,
+          photoURL,
+          address: hasAddress ? { ...address, cep } : null,
+        });
+      } catch {
+        // Silently ignore — skip should always proceed
+      }
+    }
+    router.replace("/(tabs)/home");
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* Cabeçalho de boas-vindas */}
+      <View style={styles.header}>
+        <Text style={styles.welcomeTitle}>Bem-vindo(a)! 🎉</Text>
+        <Text style={styles.welcomeSubtitle}>
+          Conte um pouco sobre você. Quanto mais completo o perfil, mais fácil para seus amigos te encontrarem.
+        </Text>
+      </View>
+
       <View style={styles.section}>
+        {/* Foto */}
         <View style={styles.photoSection}>
           <TouchableOpacity onPress={pickImage} disabled={uploading}>
             {uploading ? (
@@ -124,11 +156,14 @@ export default function CompleteProfile() {
             )}
           </TouchableOpacity>
           <Text style={styles.photoLabel}>
-            {uploading ? "Enviando..." : "Adicionar foto"}
+            {uploading ? "Enviando..." : "Adicionar foto (opcional)"}
           </Text>
         </View>
 
-        <Text style={styles.label}>Nome</Text>
+        {/* Nome — obrigatório */}
+        <Text style={styles.label}>
+          Nome <Text style={styles.required}>*</Text>
+        </Text>
         <TextInput
           value={name}
           onChangeText={setName}
@@ -137,7 +172,10 @@ export default function CompleteProfile() {
           placeholderTextColor="#888"
         />
 
-        <Text style={styles.label}>Telefone</Text>
+        {/* Telefone — opcional */}
+        <Text style={styles.label}>
+          Telefone <Text style={styles.optional}>(opcional)</Text>
+        </Text>
         <TextInput
           value={phone}
           onChangeText={setPhone}
@@ -147,7 +185,9 @@ export default function CompleteProfile() {
           placeholderTextColor="#888"
         />
 
-        <Text style={styles.label}>CEP</Text>
+        {/* Endereço — opcional */}
+        <Text style={styles.sectionLabel}>Endereço <Text style={styles.optional}>(opcional)</Text></Text>
+
         <TextInput
           value={cep}
           onChangeText={(text) => {
@@ -156,11 +196,10 @@ export default function CompleteProfile() {
           }}
           keyboardType="numeric"
           style={styles.input}
-          placeholder="Digite seu CEP"
+          placeholder="CEP"
           placeholderTextColor="#888"
         />
 
-        <Text style={styles.label}>Rua</Text>
         <TextInput
           placeholder="Rua"
           value={address.street}
@@ -168,7 +207,6 @@ export default function CompleteProfile() {
           style={styles.input}
           placeholderTextColor="#888"
         />
-        <Text style={styles.label}>Cidade</Text>
         <TextInput
           placeholder="Cidade"
           value={address.city}
@@ -176,20 +214,12 @@ export default function CompleteProfile() {
           style={styles.input}
           placeholderTextColor="#888"
         />
-        <Text style={styles.label}>Estado</Text>
         <TextInput
           placeholder="Estado"
           value={address.state}
           onChangeText={(text) => setAddress((prev) => ({ ...prev, state: text }))}
           style={styles.input}
           placeholderTextColor="#888"
-        />
-        <Text style={styles.label}>País</Text>
-        <TextInput
-          placeholder="País"
-          value={address.country}
-          editable={false}
-          style={[styles.input, { color: "#888" }]}
         />
 
         <TouchableOpacity
@@ -200,22 +230,41 @@ export default function CompleteProfile() {
           {saving ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Salvar Perfil</Text>
+            <Text style={styles.buttonText}>Salvar e continuar</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handleSkip} disabled={saving} style={styles.skipButton}>
+          <Text style={styles.skipText}>Pular por agora</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
-// ESTILOS
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F3F4F6",
   },
   contentContainer: {
     padding: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1d3f5d",
+    marginBottom: 6,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    lineHeight: 20,
   },
   section: {
     backgroundColor: "#FFFFFF",
@@ -235,34 +284,52 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#f0f0f0',
   },
   avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#e1e1e1',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  placeholderText: { fontSize: 36, color: '#666' },
-  photoLabel: { marginTop: 8, color: '#666', fontSize: 14 },
+  placeholderText: { fontSize: 32, color: '#666' },
+  photoLabel: { marginTop: 8, color: '#666', fontSize: 13 },
   label: {
-    fontWeight: 'bold',
-    marginTop: 10,
+    fontWeight: '600',
+    marginTop: 8,
     color: "#1d3f5d",
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: 5,
+  },
+  sectionLabel: {
+    fontWeight: '600',
+    marginTop: 14,
+    marginBottom: 8,
+    color: "#1d3f5d",
+    fontSize: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+    paddingTop: 14,
+  },
+  required: {
+    color: "#f43f5e",
+  },
+  optional: {
+    fontWeight: "400",
+    color: "#9CA3AF",
+    fontSize: 13,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#1d3f5d",
-    backgroundColor: "#fff",
+    borderColor: "#D1D5DB",
+    backgroundColor: "#F9FAFB",
     borderRadius: 8,
-    marginBottom: 15,
+    marginBottom: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
     fontSize: 16,
@@ -279,7 +346,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.10,
     shadowRadius: 3,
     elevation: 2,
-    marginTop: 10,
+    marginTop: 16,
   },
   buttonDisabled: {
     backgroundColor: "#A0A0A0",
@@ -288,5 +355,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  skipButton: {
+    alignItems: "center",
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  skipText: {
+    color: "#9CA3AF",
+    fontSize: 14,
   },
 });

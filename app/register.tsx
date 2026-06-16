@@ -1,169 +1,259 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
-  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import { auth, db, sendEmailVerification } from "../services/firebase"; // sendEmailVerification importado
+import { auth, db, sendEmailVerification } from "../services/firebase";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // Novo estado para confirmar senha
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const router = useRouter();
 
+  const validate = () => {
+    let valid = true;
+    setEmailError("");
+    setPasswordError("");
+    setConfirmError("");
+
+    if (!email) {
+      setEmailError("Informe seu e-mail.");
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Formato de e-mail inválido.");
+      valid = false;
+    }
+
+    if (!password) {
+      setPasswordError("Informe uma senha.");
+      valid = false;
+    } else if (password.length < 6) {
+      setPasswordError("A senha deve ter pelo menos 6 caracteres.");
+      valid = false;
+    }
+
+    if (!confirmPassword) {
+      setConfirmError("Confirme sua senha.");
+      valid = false;
+    } else if (password !== confirmPassword) {
+      setConfirmError("As senhas não coincidem.");
+      valid = false;
+    }
+
+    return valid;
+  };
+
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert("Erro", "Preencha todos os campos.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert("Erro", "As senhas não coincidem.");
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
-
+    if (!validate()) return;
+    setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Enviar e-mail de verificação
       await sendEmailVerification(user);
 
-      // Cria um documento para o usuário no Firestore
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
-        name: null, // Nome será preenchido em complete-profile
-        photoURL: null, // photoURL será preenchido em complete-profile ou via Google
+        name: null,
+        photoURL: null,
         profileComplete: false,
         createdAt: new Date().toISOString(),
       });
 
-      console.log("Usuário registrado com sucesso:", user.uid);
-      Alert.alert(
-        "Sucesso!",
-        "Conta criada com sucesso! Um e-mail de confirmação foi enviado para " +
-          user.email +
-          ". Por favor, verifique sua caixa de entrada para ativar sua conta antes de fazer login."
-      );
-      router.replace("/"); // Redireciona para a página de login
+      router.replace("/verify-email");
     } catch (error: any) {
       console.error("Erro ao registrar:", error);
-      if (error.code === 'auth/email-already-in-use') {
-        Alert.alert("Erro", "Este e-mail já está em uso.");
-      } else if (error.code === 'auth/invalid-email') {
-        Alert.alert("Erro", "O formato do e-mail é inválido.");
-      } else if (error.code === 'auth/weak-password') {
-        Alert.alert("Erro", "A senha é muito fraca. Por favor, escolha uma senha mais forte.");
+      if (error.code === "auth/email-already-in-use") {
+        setEmailError("Este e-mail já está cadastrado.");
+      } else if (error.code === "auth/invalid-email") {
+        setEmailError("Formato de e-mail inválido.");
+      } else if (error.code === "auth/weak-password") {
+        setPasswordError("Senha muito fraca. Escolha uma senha mais forte.");
       } else {
-        Alert.alert("Erro", "Não foi possível criar a conta.");
+        Alert.alert("Erro", "Não foi possível criar a conta. Tente novamente.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Criar Conta</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.screen}
+    >
+      <View style={styles.card}>
+        <Text style={styles.appName}>IndicaAí</Text>
+        <Text style={styles.subtitle}>Crie sua conta e comece a indicar</Text>
+
+        {/* Aviso sobre verificação */}
+        <View style={styles.infoBox}>
+          <MaterialIcons name="mail-outline" size={18} color="#1976D2" style={{ marginRight: 8 }} />
+          <Text style={styles.infoText}>
+            Após o cadastro, enviaremos um e-mail de verificação. É rápido!
+          </Text>
+        </View>
+
         <TextInput
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(t) => { setEmail(t); setEmailError(""); }}
           placeholder="E-mail"
+          placeholderTextColor="#A0A0A0"
           keyboardType="email-address"
           autoCapitalize="none"
-          style={styles.input}
+          style={[styles.input, emailError ? styles.inputError : null]}
         />
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
         <TextInput
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(t) => { setPassword(t); setPasswordError(""); }}
           placeholder="Senha (mínimo 6 caracteres)"
+          placeholderTextColor="#A0A0A0"
           secureTextEntry
-          style={styles.input}
+          style={[styles.input, passwordError ? styles.inputError : null]}
         />
+        {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
-        <TextInput // Novo campo para confirmar senha
+        <TextInput
           value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="Repetir Senha"
+          onChangeText={(t) => { setConfirmPassword(t); setConfirmError(""); }}
+          placeholder="Confirmar senha"
+          placeholderTextColor="#A0A0A0"
           secureTextEntry
-          style={styles.input}
+          style={[styles.input, confirmError ? styles.inputError : null]}
         />
+        {confirmError ? <Text style={styles.errorText}>{confirmError}</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Criar conta</Text>
+        <TouchableOpacity
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Criar conta</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.replace("/")}>
           <Text style={styles.loginLink}>Já tem uma conta? Faça login</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
+    backgroundColor: "#1d3f5d",
     justifyContent: "center",
-    padding: 20,
-    backgroundColor: "#FFFFFF",
-    paddingBottom: 32, // margem extra para evitar sobreposição
+    alignItems: "center",
   },
-  title: {
-    fontSize: 28,
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 28,
+    width: "90%",
+    maxWidth: 380,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  appName: {
+    fontSize: 30,
     fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 30,
     color: "#1d3f5d",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  infoBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EFF6FF",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 20,
+    width: "100%",
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#1976D2",
+    lineHeight: 18,
   },
   input: {
-    backgroundColor: "white",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+    width: "100%",
+    backgroundColor: "#F9FAFB",
+    borderColor: "#D1D5DB",
     borderWidth: 1,
-    borderColor: "#1d3f5d",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     fontSize: 16,
-    color: "#1C1C1E"
+    marginBottom: 4,
+    color: "#1C1C1E",
+  },
+  inputError: {
+    borderColor: "#f43f5e",
+  },
+  errorText: {
+    alignSelf: "flex-start",
+    color: "#f43f5e",
+    fontSize: 12,
+    marginBottom: 10,
+    marginLeft: 4,
   },
   button: {
-    backgroundColor: "#1d3f5d",
-    paddingVertical: 15,
-    borderRadius: 8,
+    backgroundColor: "#1976D2",
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: "center",
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2
+    width: "100%",
+    marginTop: 10,
+    marginBottom: 16,
+  },
+  buttonDisabled: {
+    backgroundColor: "#93C5FD",
   },
   buttonText: {
-    color: "white",
+    color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 16,
   },
   loginLink: {
-    color: "#007AFF",
-    textAlign: "center",
+    color: "#1976D2",
     fontSize: 14,
-    marginTop: 10
+    fontWeight: "500",
   },
 });
 

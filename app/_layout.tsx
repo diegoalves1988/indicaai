@@ -63,6 +63,7 @@ export default function RootLayout() {
         <Stack.Screen name="edit-professional-profile" />
         <Stack.Screen name="register-professional" />
         <Stack.Screen name="advanced-filters" />
+        <Stack.Screen name="verify-email" />
       </Stack>
     </SafeAreaView>
   );
