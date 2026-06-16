@@ -33,7 +33,7 @@
 Para que o upload de imagens funcione na versão web (Expo Web / localhost), é necessário configurar o CORS no bucket do Firebase Storage. Execute o comando abaixo **uma única vez**:
 
 ```bash
-gsutil cors set cors.json gs://service-recommendation-app.appspot.com
+gsutil cors set cors.json gs://service-recommendation-app.firebasestorage.app
 ```
 
 > **Pré-requisito**: ter o [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) instalado e autenticado com `gcloud auth login`.
@@ -47,4 +47,3 @@ O arquivo `cors.json` na raiz do projeto já contém as origens permitidas (loca
    ```bash
    git clone https://github.com/diegoalves1988/indicaai
    ```
-
