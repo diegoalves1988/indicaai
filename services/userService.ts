@@ -60,40 +60,44 @@ export async function updateUserProfile(userId: string, updatedData: Partial<Use
 }
 
 // ✅ Upload da imagem de perfil para o Firebase Storage e retorna a URL de download
-export async function uploadProfileImage(userId: string, imageSource: string | Blob): Promise<string> {
-  let blob: Blob;
-  if (typeof imageSource === "string") {
-    const response = await fetch(imageSource);
-    blob = await response.blob();
-  } else {
-    blob = imageSource;
-  }
-
-  const storageRef = ref(storage, `profile_pics/${userId}/profile.jpg`);
-
-  const uploadTask = uploadBytesResumable(storageRef, blob, {
-    contentType: blob.type || "image/jpeg",
-  });
-
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      null,
-      (error) => {
-        console.error("Erro no upload da imagem de perfil:", error);
-        reject(error);
-      },
-      async () => {
-        try {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await updateUserProfile(userId, { photoURL: downloadURL });
-          resolve(downloadURL);
-        } catch (error) {
-          console.error("[uploadProfileImage] Erro ao finalizar upload:", error);
-          reject(error);
-        }
+export function uploadProfileImage(userId: string, imageSource: string | Blob): Promise<string> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let blob: Blob;
+      if (typeof imageSource === "string") {
+        const response = await fetch(imageSource);
+        blob = await response.blob();
+      } else {
+        blob = imageSource;
       }
-    );
+
+      const storageRef = ref(storage, `profile_pics/${userId}/profile.jpg`);
+      const uploadTask = uploadBytesResumable(storageRef, blob, {
+        contentType: blob.type || "image/jpeg",
+      });
+
+      uploadTask.on(
+        "state_changed",
+        null,
+        (error) => {
+          console.error("Erro no upload da imagem de perfil:", error);
+          reject(error);
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            await updateUserProfile(userId, { photoURL: downloadURL });
+            resolve(downloadURL);
+          } catch (error) {
+            console.error("[uploadProfileImage] Erro ao finalizar upload:", error);
+            reject(error);
+          }
+        }
+      );
+    } catch (error) {
+      console.error("[uploadProfileImage] Erro ao preparar upload:", error);
+      reject(error);
+    }
   });
 }
 
