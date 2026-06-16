@@ -1,7 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { reload } from "firebase/auth";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,8 +16,16 @@ export default function VerifyEmail() {
   const router = useRouter();
   const [checking, setChecking] = useState(false);
   const [resending, setResending] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
 
-  const userEmail = auth.currentUser?.email ?? "";
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) {
+      router.replace("/");
+      return;
+    }
+    setUserEmail(user.email ?? "");
+  }, []);
 
   const handleCheckVerification = async () => {
     setChecking(true);

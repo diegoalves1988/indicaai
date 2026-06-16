@@ -102,7 +102,21 @@ export default function CompleteProfile() {
     await saveProfile(true);
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    const user = auth.currentUser;
+    if (user && name.trim()) {
+      try {
+        const hasAddress = cep && address.street && address.city && address.state;
+        await updateDoc(doc(db, "users", user.uid), {
+          name: name.trim(),
+          phone: phone.trim() || null,
+          photoURL,
+          address: hasAddress ? { ...address, cep } : null,
+        });
+      } catch {
+        // Silently ignore — skip should always proceed
+      }
+    }
     router.replace("/(tabs)/home");
   };
 
