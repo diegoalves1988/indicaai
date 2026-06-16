@@ -28,9 +28,22 @@
 [Detalhes do escopo](/docs/scope.md)  
 [Publicar na Play Store](/docs/publishing-play-store.md)  
 
+## 🔧 Configuração do Firebase Storage (CORS)
+
+Para que o upload de imagens funcione na versão web (Expo Web / localhost), é necessário configurar o CORS no bucket do Firebase Storage. Execute o comando abaixo **uma única vez**:
+
+```bash
+gsutil cors set cors.json gs://service-recommendation-app.firebasestorage.app
+```
+
+> **Pré-requisito**: ter o [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) instalado e autenticado com `gcloud auth login`.
+
+O arquivo `cors.json` na raiz do projeto já contém as origens permitidas (localhost:8081, localhost:19006, domínios de produção).
+
+---
+
 ## 🚀 Como Usar
 1. Clone o repositório:
    ```bash
    git clone https://github.com/diegoalves1988/indicaai
    ```
-

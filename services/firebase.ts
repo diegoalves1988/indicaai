@@ -16,7 +16,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDH0uEw-Ml-66pUEHF1MWED7TbuhRIWHQ0",
   authDomain: "service-recommendation-app.firebaseapp.com",
   projectId: "service-recommendation-app",
-  storageBucket: "service-recommendation-app.appspot.com", // Corrigido conforme sugestão anterior
+  storageBucket: "service-recommendation-app.firebasestorage.app",
   messagingSenderId: "859975350986",
   appId: "1:859975350986:web:830f7e110142f053041233",
   measurementId: "G-WW074H965J",
@@ -41,4 +41,3 @@ const googleProvider = new GoogleAuthProvider();
 
 // Exportar todos os serviços e o provedor
 export { auth, db, googleProvider, sendEmailVerification, storage };
-
