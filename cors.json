@@ -1,0 +1,20 @@
+[
+  {
+    "origin": [
+      "http://localhost:8081",
+      "http://localhost:19006",
+      "http://localhost:3000",
+      "https://service-recommendation-app.web.app",
+      "https://service-recommendation-app.firebaseapp.com"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Content-Length",
+      "Accept"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]
