@@ -1,31 +1,61 @@
-import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 import { FontAwesome } from "@expo/vector-icons";
+import { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } from "@react-native-google-signin/google-signin";
 import { useRouter } from "expo-router";
 import {
-  GoogleAuthProvider,
-  signInWithCredential,
-  signInWithEmailAndPassword,
+    GoogleAuthProvider,
+    type User,
+    signInWithCredential,
+    signInWithEmailAndPassword,
+    signInWithPopup,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import * as yup from "yup";
-import { auth, db } from "../services/firebase";
+import { auth, db, googleProvider } from "../services/firebase";
 
 type FormData = { email: string; password: string };
 
 export default function Login() {
   const router = useRouter();
+
+  const ensureUserDocument = async (user: User) => {
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email ?? null,
+        name: user.displayName ?? null,
+        phone: user.phoneNumber ?? "",
+        photoURL: user.photoURL ?? null,
+        address: {
+          cep: "",
+          street: "",
+          city: "",
+          state: "",
+          country: "Brasil",
+        },
+        profileComplete: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      return false;
+    }
+
+    return Boolean(snap.data().profileComplete);
+  };
 
   // ---- validação com yup ----
   const schema = yup.object({
@@ -62,29 +92,41 @@ export default function Login() {
   // ---- Google Auth (Native Sign-In) ----
   const handleGoogleLogin = async () => {
     try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const response = await GoogleSignin.signIn();
+      let user: User;
 
-      if (!isSuccessResponse(response)) {
-        return;
+      if (Platform.OS === "web") {
+        const result = await signInWithPopup(auth, googleProvider);
+        user = result.user;
+      } else {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        const response = await GoogleSignin.signIn();
+
+        if (!isSuccessResponse(response)) {
+          return;
+        }
+
+        const idToken = response.data.idToken;
+        if (!idToken) {
+          Alert.alert("Erro", "Não foi possível obter o token do Google.");
+          return;
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken);
+        const result = await signInWithCredential(auth, credential);
+        user = result.user;
       }
 
-      const idToken = response.data.idToken;
-      if (!idToken) {
-        Alert.alert("Erro", "Não foi possível obter o token do Google.");
-        return;
-      }
-
-      const credential = GoogleAuthProvider.credential(idToken);
-      const { user } = await signInWithCredential(auth, credential);
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists() && snap.data().profileComplete) {
+      const isProfileComplete = await ensureUserDocument(user);
+      if (isProfileComplete) {
         router.replace("/(tabs)/home");
       } else {
         router.replace("/complete-profile");
       }
     } catch (error: any) {
+      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+        return;
+      }
+
       if (isErrorWithCode(error)) {
         if (error.code === statusCodes.SIGN_IN_CANCELLED) {
           return;

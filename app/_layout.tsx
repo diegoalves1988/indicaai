@@ -8,9 +8,9 @@ import { useAuth } from '../hooks/useAuth';
 
 const webClientId = (Constants.expoConfig?.extra as any)?.EXPO_PUBLIC_GOOGLE_CLIENT_ID as string;
 
-if (webClientId) {
+if (Platform.OS !== 'web' && webClientId) {
   GoogleSignin.configure({ webClientId });
-} else {
+} else if (Platform.OS !== 'web') {
   console.warn('EXPO_PUBLIC_GOOGLE_CLIENT_ID is not set. Google Sign-In will not work.');
 }
 
@@ -23,7 +23,7 @@ export default function RootLayout() {
   useFocusEffect(
     useCallback(() => {
       if (!loading && user) {
-        const isAuthPage = segments.includes('(auth)'); // Verifica se está em uma rota de autenticação
+        const isAuthPage = (segments as string[]).includes('(auth)'); // Verifica se está em uma rota de autenticação
         if (!user && !isAuthPage) {
           console.log('Redirecionando para a página inicial (index.tsx)');
           router.replace('/'); // Redireciona para a página inicial (index.tsx)
