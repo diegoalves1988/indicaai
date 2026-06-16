@@ -1,5 +1,5 @@
 import { Image } from 'expo-image'; // Usando expo-image para melhor performance e cache
-import React from 'react';
+import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 
 interface UserAvatarProps {
@@ -9,6 +9,8 @@ interface UserAvatarProps {
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({ photoURL, name, size = 50 }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+
   const getInitials = (fullName?: string): string => {
     if (!fullName) return '?';
     const names = fullName.split(' ');
@@ -33,13 +35,14 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ photoURL, name, size = 50 }) =>
     fontWeight: 'bold' as 'bold',
   };
 
-  if (photoURL) {
+  if (photoURL && !imageFailed) {
     return (
       <Image
         source={{ uri: photoURL }}
         style={avatarStyle}
         placeholder={require('../assets/images/avatar_link.jpg')} // Placeholder local enquanto carrega ou se falhar
         transition={300} // Efeito suave de transição
+        onError={() => setImageFailed(true)}
       />
     );
   }

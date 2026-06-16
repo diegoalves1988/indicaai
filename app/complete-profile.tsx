@@ -68,7 +68,8 @@ export default function CompleteProfile() {
     const blob = await response.blob();
     const storageRef = ref(storage, `profile-pics/${auth.currentUser?.uid}`);
     await uploadBytes(storageRef, blob);
-    return await getDownloadURL(storageRef);
+    const downloadURL = await getDownloadURL(storageRef);
+    return `${downloadURL}${downloadURL.includes("?") ? "&" : "?"}v=${Date.now()}`;
   };
 
   const handleSaveProfile = async () => {

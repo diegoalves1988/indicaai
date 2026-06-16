@@ -8,15 +8,15 @@ import {
   doc,
   getDoc, // Adicionado setDoc para createUserProfile
   getDocs,
+  limit,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
-  updateDoc,
-  writeBatch,
-  query,
-  where,
-  orderBy,
-  limit,
   startAfter,
+  updateDoc,
+  where,
+  writeBatch,
 } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage"; // Adicionado para Firebase Storage
 import { db, storage } from "./firebase"; // Adicionado storage
@@ -86,8 +86,9 @@ export function uploadProfileImage(userId: string, imageSource: string | Blob): 
         async () => {
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            await updateUserProfile(userId, { photoURL: downloadURL });
-            resolve(downloadURL);
+            const cacheBustedURL = `${downloadURL}${downloadURL.includes("?") ? "&" : "?"}v=${Date.now()}`;
+            await updateUserProfile(userId, { photoURL: cacheBustedURL });
+            resolve(cacheBustedURL);
           } catch (error) {
             console.error("[uploadProfileImage] Erro ao finalizar upload:", error);
             reject(error);

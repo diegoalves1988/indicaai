@@ -1,11 +1,11 @@
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { initializeApp } from "firebase/app";
 import {
-  getAuth,
-  getReactNativePersistence,
-  GoogleAuthProvider, // Import GoogleAuthProvider
-  initializeAuth, // Import initializeAuth
-  sendEmailVerification, // Import sendEmailVerification
+    getAuth,
+    getReactNativePersistence,
+    GoogleAuthProvider, // Import GoogleAuthProvider
+    initializeAuth, // Import initializeAuth
+    sendEmailVerification, // Import sendEmailVerification
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
