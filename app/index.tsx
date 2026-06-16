@@ -22,7 +22,7 @@ import {
     View,
 } from "react-native";
 import * as yup from "yup";
-import { auth, db, googleProvider } from "../services/firebase";
+import { auth, db, googleProvider, sendEmailVerification } from "../services/firebase";
 
 type FormData = { email: string; password: string };
 
@@ -145,6 +145,28 @@ export default function Login() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        Alert.alert(
+          "E-mail não verificado",
+          "Você precisa confirmar seu e-mail antes de entrar. Deseja receber o link de verificação novamente?",
+          [
+            { text: "Não", style: "cancel" },
+            {
+              text: "Reenviar",
+              onPress: async () => {
+                try {
+                  await sendEmailVerification(user);
+                  router.replace("/verify-email");
+                } catch {
+                  Alert.alert("Erro", "Não foi possível reenviar o e-mail.");
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
 
       const snap = await getDoc(doc(db, "users", user.uid));
       if (snap.exists() && snap.data().profileComplete) {
