@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import FriendsSuggestions from '../../components/home/FriendsSuggestions';
 import HomeHeader from '../../components/home/HomeHeader';
 import ProfessionalList from '../../components/home/ProfessionalList';
-import FriendsSuggestions from '../../components/home/FriendsSuggestions';
-import { useProfessionals } from '../../hooks/useProfessionals';
 import { useAuth } from '../../hooks/useAuth';
+import { useProfessionals } from '../../hooks/useProfessionals';
 import { auth } from '../../services/firebase';
 import { addFriend, getSuggestedFriends, getUserProfile } from '../../services/userService';
 
@@ -183,6 +183,8 @@ const HomeScreen = () => {
         selectedSpecialty={selectedSpecialty}
         onSelectSpecialty={setSelectedSpecialty}
         onSignOut={async () => { await signOut(auth); }}
+        isProfessional={!!userData?.professionalProfile}
+        onBecomeProfessional={() => router.push('/register-professional')}
       />
 
       <Text style={styles.sectionTitle}>{getSectionTitle()}</Text>
@@ -222,15 +224,6 @@ const HomeScreen = () => {
           )}
         </TouchableOpacity>
       )}
-
-      {!userData?.professionalProfile && (
-        <TouchableOpacity
-          style={styles.beProfessionalButton}
-          onPress={() => router.push('/register-professional')}
-        >
-          <Text style={styles.beProfessionalText}>Quero ser profissional</Text>
-        </TouchableOpacity>
-      )}
     </ScrollView>
   );
 };
@@ -246,20 +239,6 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     marginLeft: 16,
     color: '#1C1C1E',
-  },
-  beProfessionalButton: {
-    margin: 20,
-    backgroundColor: '#FFFFFF',
-    padding: 14,
-    borderRadius: 10,
-    borderColor: '#1d3f5d',
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  beProfessionalText: {
-    color: '#1d3f5d',
-    fontWeight: 'bold',
-    borderRadius: 18,
   },
   loadMoreButton: {
     marginHorizontal: 16,

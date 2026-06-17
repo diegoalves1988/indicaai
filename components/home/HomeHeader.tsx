@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import UserAvatar from '../UserAvatar';
 import SearchBar from './SearchBar';
 
@@ -24,6 +24,8 @@ interface HomeHeaderProps {
   selectedSpecialty: string | null;
   onSelectSpecialty: (specialty: string | null) => void;
   onSignOut: () => void;
+  isProfessional?: boolean;
+  onBecomeProfessional?: () => void;
 }
 
 const HomeHeader: React.FC<HomeHeaderProps> = ({
@@ -39,6 +41,8 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
   selectedSpecialty,
   onSelectSpecialty,
   onSignOut,
+  isProfessional = false,
+  onBecomeProfessional,
 }) => {
   const hasSpecialties = topSpecialties.length > 0;
 
@@ -48,10 +52,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
         <View style={styles.headerContent}>
           <View style={styles.userInfoContainer}>
             <UserAvatar photoURL={photoURL} name={userName} size={44} />
-            <View>
-              <Text style={styles.greetingText}>Olá,</Text>
-              <Text style={styles.userInfoText}>{userName || 'Usuário'}</Text>
-            </View>
+            <Text style={styles.userInfoText}>{userName || 'Usuário'}</Text>
           </View>
 
           <TouchableOpacity onPress={onSignOut} style={styles.signOutButton}>
@@ -104,6 +105,16 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
             ))}
           </View>
         )}
+
+        {!isProfessional && onBecomeProfessional && (
+          <TouchableOpacity
+            style={styles.beProfessionalButton}
+            onPress={onBecomeProfessional}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.beProfessionalText}>Quero ser profissional</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -130,15 +141,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  greetingText: {
-    color: '#E2E8F0',
-    fontSize: 14,
-    marginBottom: 2,
-  },
   userInfoText: {
     color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '700',
+    marginLeft: 12,
   },
   signOutButton: {
     padding: 6,
@@ -221,6 +228,18 @@ const styles = StyleSheet.create({
   },
   activeChipText: {
     color: '#FFFFFF',
+  },
+  beProfessionalButton: {
+    backgroundColor: '#1d3f5d',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  beProfessionalText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 
