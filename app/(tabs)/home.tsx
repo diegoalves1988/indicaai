@@ -126,6 +126,7 @@ const HomeScreen = () => {
 
   const getSectionTitle = () => {
     if (activeFilters.maxDistance === 0 && userCity) return `Profissionais em ${userCity}`;
+    if ((activeFilters.maxDistance || 0) > 0) return `Profissionais ate ${activeFilters.maxDistance} km de voce`;
     if (userCity) return `Profissionais perto de ${userCity}`;
     return 'Profissionais em destaque';
   };

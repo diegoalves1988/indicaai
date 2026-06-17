@@ -2,7 +2,7 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { doc, updateDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../services/firebase';
 import { getCurrentCoordinates } from '../services/locationService';
 
@@ -37,6 +37,18 @@ export default function AdvancedFilters() {
     specialties: params.specialties ? String(params.specialties).split(',') : [],
     maxDistance: params.maxDistance !== undefined && params.maxDistance !== '' ? Number(params.maxDistance) : null,
   });
+  const [locationMode, setLocationMode] = useState<'all' | 'city' | 'radius'>(
+    params.maxDistance === undefined || params.maxDistance === ''
+      ? 'all'
+      : Number(params.maxDistance) === 0
+      ? 'city'
+      : 'radius'
+  );
+  const [customDistanceKm, setCustomDistanceKm] = useState(
+    params.maxDistance !== undefined && params.maxDistance !== '' && Number(params.maxDistance) > 0
+      ? String(params.maxDistance)
+      : ''
+  );
 
   // Lista de especialidades disponíveis (deve ser carregada do banco de dados)
   const availableSpecialties = [
@@ -50,20 +62,6 @@ export default function AdvancedFilters() {
     'Técnico de Informática',
     'Técnico de Ar Condicionado',
   ];
-
-  // Opções de localização
-  const locationOptions: { label: string; value: number | null }[] = [
-    { label: 'Todas as cidades', value: null },
-  ];
-  if (userCity) {
-    locationOptions.push({ label: `Apenas ${userCity}`, value: 0 });
-  }
-  locationOptions.push(
-    { label: 'Até 5 km', value: 5 },
-    { label: 'Até 10 km', value: 10 },
-    { label: 'Até 25 km', value: 25 },
-    { label: 'Até 50 km', value: 50 }
-  );
 
   const ensureUserLocation = async () => {
     if (userLocation) return userLocation;
@@ -93,13 +91,20 @@ export default function AdvancedFilters() {
     return coords;
   };
 
-  const selectLocationFilter = async (value: number | null) => {
-    if (value !== null && value > 0) {
-      const coords = await ensureUserLocation();
-      if (!coords) return;
-    }
+  const setModeAll = () => {
+    setLocationMode('all');
+    setFilters((prev) => ({ ...prev, maxDistance: null }));
+  };
 
-    setFilters((prev) => ({ ...prev, maxDistance: value }));
+  const setModeCity = () => {
+    setLocationMode('city');
+    setFilters((prev) => ({ ...prev, maxDistance: 0 }));
+  };
+
+  const handleCustomDistanceChange = (text: string) => {
+    const normalized = text.replace(',', '.').replace(/[^\d.]/g, '');
+    setCustomDistanceKm(normalized);
+    setLocationMode('radius');
   };
 
   // Opções de avaliação
@@ -129,6 +134,19 @@ export default function AdvancedFilters() {
 
   // Função para aplicar filtros e voltar para a home
   const applyFilters = () => {
+    let resolvedMaxDistance: number | null = null;
+
+    if (locationMode === 'city') {
+      resolvedMaxDistance = 0;
+    } else if (locationMode === 'radius') {
+      const parsedDistance = Number(customDistanceKm);
+      if (!parsedDistance || parsedDistance <= 0) {
+        Alert.alert('Distância inválida', 'Informe um valor de km maior que zero.');
+        return;
+      }
+      resolvedMaxDistance = parsedDistance;
+    }
+
     // 'applied' marker signals to the home screen that filters were explicitly set
     const queryParams: Record<string, string> = { applied: '1' };
     
@@ -140,20 +158,30 @@ export default function AdvancedFilters() {
       queryParams.specialties = filters.specialties.join(',');
     }
     
-    if (filters.maxDistance !== null) {
-      queryParams.maxDistance = filters.maxDistance.toString();
+    if (resolvedMaxDistance !== null) {
+      queryParams.maxDistance = resolvedMaxDistance.toString();
     }
 
-    if (userLocation?.latitude && userLocation?.longitude) {
-      queryParams.userLatitude = String(userLocation.latitude);
-      queryParams.userLongitude = String(userLocation.longitude);
-    }
+    const continueWithNavigation = async () => {
+      let effectiveLocation = userLocation;
+      if (locationMode === 'radius') {
+        effectiveLocation = await ensureUserLocation();
+        if (!effectiveLocation) return;
+      }
+
+      if (effectiveLocation?.latitude && effectiveLocation?.longitude) {
+        queryParams.userLatitude = String(effectiveLocation.latitude);
+        queryParams.userLongitude = String(effectiveLocation.longitude);
+      }
     
-    // Navegar de volta para a home com os filtros aplicados
-    router.push({
-      pathname: '/(tabs)/home',
-      params: queryParams
-    });
+      // Navegar de volta para a home com os filtros aplicados
+      router.push({
+        pathname: '/(tabs)/home',
+        params: queryParams
+      });
+    };
+
+    void continueWithNavigation();
   };
 
   // Função para limpar todos os filtros
@@ -163,6 +191,8 @@ export default function AdvancedFilters() {
       specialties: [],
       maxDistance: null,
     });
+    setLocationMode('all');
+    setCustomDistanceKm('');
   };
 
   return (
@@ -240,32 +270,64 @@ export default function AdvancedFilters() {
             </View>
           )}
           <View style={styles.locationOptions}>
-            {locationOptions.map((option, index) => (
+            <TouchableOpacity
+              style={[
+                styles.locationOption,
+                locationMode === 'all' && styles.selectedLocationOption,
+              ]}
+              onPress={setModeAll}
+            >
+              <Ionicons
+                name="globe-outline"
+                size={18}
+                color={locationMode === 'all' ? '#FFFFFF' : '#4B5563'}
+              />
+              <Text
+                style={[
+                  styles.locationOptionText,
+                  locationMode === 'all' && styles.selectedLocationOptionText,
+                ]}
+              >
+                Todas as cidades
+              </Text>
+            </TouchableOpacity>
+
+            {!!userCity && (
               <TouchableOpacity
-                key={index}
                 style={[
                   styles.locationOption,
-                  filters.maxDistance === option.value && styles.selectedLocationOption,
+                  locationMode === 'city' && styles.selectedLocationOption,
                 ]}
-                onPress={() => {
-                  void selectLocationFilter(option.value);
-                }}
+                onPress={setModeCity}
               >
                 <Ionicons
-                  name={option.value === null ? 'globe-outline' : 'location-sharp'}
+                  name="location-sharp"
                   size={18}
-                  color={filters.maxDistance === option.value ? '#FFFFFF' : '#4B5563'}
+                  color={locationMode === 'city' ? '#FFFFFF' : '#4B5563'}
                 />
                 <Text
                   style={[
                     styles.locationOptionText,
-                    filters.maxDistance === option.value && styles.selectedLocationOptionText,
+                    locationMode === 'city' && styles.selectedLocationOptionText,
                   ]}
                 >
-                  {option.label}
+                  Apenas {userCity}
                 </Text>
               </TouchableOpacity>
-            ))}
+            )}
+
+            <View style={styles.customDistanceRow}>
+              <Ionicons name="navigate-outline" size={18} color="#4B5563" />
+              <TextInput
+                value={customDistanceKm}
+                onChangeText={handleCustomDistanceChange}
+                keyboardType="numeric"
+                placeholder="Km máximo (ex: 12)"
+                placeholderTextColor="#9CA3AF"
+                style={styles.customDistanceInput}
+              />
+              <Text style={styles.kmLabel}>km</Text>
+            </View>
           </View>
           {!userLocation && (
             <Text style={styles.locationHint}>
@@ -422,6 +484,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     marginTop: 8,
+  },
+  customDistanceRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  customDistanceInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1F2937',
+    paddingVertical: 2,
+  },
+  kmLabel: {
+    color: '#4B5563',
+    fontWeight: '500',
   },
   selectedLocationOption: {
     borderColor: '#1d3f5d',
