@@ -1,23 +1,36 @@
-import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, increment, query, updateDoc, where, orderBy, limit as limitQuery, startAfter as startAfterQuery } from "firebase/firestore";
+import { addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, increment, limit as limitQuery, orderBy, query, startAfter as startAfterQuery, updateDoc, where } from "firebase/firestore";
 import { db } from "./firebase";
+import { geocodeCity } from "./locationService";
 
 interface Professional {
+  id?: string;
   userId: string;
   name: string;
   category: string;
-  specialties: string[];
+  specialties?: string[];
+  specialty?: string[];
   city: string;
   bio?: string;
   recommendationCount?: number;
   recommendedBy?: string[];
+  location?: {
+    latitude: number;
+    longitude: number;
+  } | null;
 }
 
 // ✅ Cadastra um profissional
 export async function registerProfessional(professional: Professional) {
   try {
+    const specialties = professional.specialties || professional.specialty || [];
+    const location = professional.location ?? (await geocodeCity(professional.city));
+
     const professionalRef = collection(db, "professionals");
     await addDoc(professionalRef, {
       ...professional,
+      specialties,
+      specialty: specialties,
+      location,
       recommendationCount: 0,
       recommendedBy: [],
     });
@@ -91,8 +104,21 @@ export async function getRecommendedProfessionalsByUser(userId: string) {
 // ✅ Atualiza os dados de um profissional
 export const updateProfessional = async (professionalId: string, updatedData: Partial<Professional>) => {
   try {
+    const updatePayload: Partial<Professional> = { ...updatedData };
+
+    if (updatedData.specialty && !updatedData.specialties) {
+      updatePayload.specialties = updatedData.specialty;
+    }
+    if (updatedData.specialties) {
+      updatePayload.specialty = updatedData.specialties;
+    }
+
+    if (updatedData.city && !updatedData.location) {
+      updatePayload.location = await geocodeCity(updatedData.city);
+    }
+
     const professionalRef = doc(db, "professionals", professionalId);
-    await updateDoc(professionalRef, updatedData);
+    await updateDoc(professionalRef, updatePayload);
     console.log("Profissional atualizado com sucesso!");
   } catch (error) {
     console.error("Erro ao atualizar profissional:", error);

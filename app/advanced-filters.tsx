@@ -1,7 +1,10 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { doc, updateDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../services/firebase';
+import { getCurrentCoordinates } from '../services/locationService';
 
 // Tipos de filtros
 interface FilterOptions {
@@ -16,6 +19,17 @@ export default function AdvancedFilters() {
   
   const userCity = params.userCity ? String(params.userCity) : '';
   const userState = params.userState ? String(params.userState) : '';
+  const initialUserLatitude = params.userLatitude ? Number(params.userLatitude) : null;
+  const initialUserLongitude = params.userLongitude ? Number(params.userLongitude) : null;
+
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(
+    initialUserLatitude !== null && initialUserLongitude !== null
+      ? { latitude: initialUserLatitude, longitude: initialUserLongitude }
+      : null
+  );
 
   // Estado inicial dos filtros (pode ser preenchido com valores dos params)
   const [filters, setFilters] = useState<FilterOptions>({
@@ -44,6 +58,49 @@ export default function AdvancedFilters() {
   if (userCity) {
     locationOptions.push({ label: `Apenas ${userCity}`, value: 0 });
   }
+  locationOptions.push(
+    { label: 'Até 5 km', value: 5 },
+    { label: 'Até 10 km', value: 10 },
+    { label: 'Até 25 km', value: 25 },
+    { label: 'Até 50 km', value: 50 }
+  );
+
+  const ensureUserLocation = async () => {
+    if (userLocation) return userLocation;
+
+    const coords = await getCurrentCoordinates();
+    if (!coords) {
+      Alert.alert(
+        'Permissão necessária',
+        'Para filtrar por proximidade em km, permita acesso à localização do dispositivo.'
+      );
+      return null;
+    }
+
+    setUserLocation(coords);
+
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        location: {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          updatedAt: new Date().toISOString(),
+        },
+      });
+    }
+
+    return coords;
+  };
+
+  const selectLocationFilter = async (value: number | null) => {
+    if (value !== null && value > 0) {
+      const coords = await ensureUserLocation();
+      if (!coords) return;
+    }
+
+    setFilters((prev) => ({ ...prev, maxDistance: value }));
+  };
 
   // Opções de avaliação
   const ratingOptions = [
@@ -85,6 +142,11 @@ export default function AdvancedFilters() {
     
     if (filters.maxDistance !== null) {
       queryParams.maxDistance = filters.maxDistance.toString();
+    }
+
+    if (userLocation?.latitude && userLocation?.longitude) {
+      queryParams.userLatitude = String(userLocation.latitude);
+      queryParams.userLongitude = String(userLocation.longitude);
     }
     
     // Navegar de volta para a home com os filtros aplicados
@@ -185,7 +247,9 @@ export default function AdvancedFilters() {
                   styles.locationOption,
                   filters.maxDistance === option.value && styles.selectedLocationOption,
                 ]}
-                onPress={() => setFilters(prev => ({ ...prev, maxDistance: option.value }))}
+                onPress={() => {
+                  void selectLocationFilter(option.value);
+                }}
               >
                 <Ionicons
                   name={option.value === null ? 'globe-outline' : 'location-sharp'}
@@ -203,6 +267,11 @@ export default function AdvancedFilters() {
               </TouchableOpacity>
             ))}
           </View>
+          {!userLocation && (
+            <Text style={styles.locationHint}>
+              Filtros em km usam a localização atual do dispositivo.
+            </Text>
+          )}
         </View>
 
         {/* Seção de Especialidades */}
@@ -348,6 +417,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFFFFF',
     gap: 10,
+  },
+  locationHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 8,
   },
   selectedLocationOption: {
     borderColor: '#1d3f5d',

@@ -27,6 +27,11 @@ interface UserProfile {
   name: string;
   phone: string;
   photoURL?: string | null; // Permitir null para remoção
+  location?: {
+    latitude: number;
+    longitude: number;
+    updatedAt?: string;
+  } | null;
   address: {
     cep: string;
     street: string;

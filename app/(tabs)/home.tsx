@@ -46,6 +46,8 @@ const HomeScreen = () => {
     loadingMore,
     userCity,
     userState,
+    userLocation,
+    setUserLocation,
   } = useProfessionals();
 
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
@@ -69,8 +71,14 @@ const HomeScreen = () => {
         specialties: params.specialties ? String(params.specialties).split(',') : [],
         maxDistance: params.maxDistance !== undefined && params.maxDistance !== '' ? Number(params.maxDistance) : null,
       });
+
+      const latitude = params.userLatitude !== undefined ? Number(params.userLatitude) : null;
+      const longitude = params.userLongitude !== undefined ? Number(params.userLongitude) : null;
+      if (latitude !== null && longitude !== null && !Number.isNaN(latitude) && !Number.isNaN(longitude)) {
+        setUserLocation({ latitude, longitude });
+      }
     }
-  }, [params.applied, params.minRating, params.specialties, params.maxDistance]);
+  }, [params.applied, params.minRating, params.specialties, params.maxDistance, params.userLatitude, params.userLongitude, setActiveFilters, setUserLocation]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -176,6 +184,8 @@ const HomeScreen = () => {
           if (activeFilters.maxDistance !== null) filterParams.maxDistance = String(activeFilters.maxDistance);
           if (userCity) filterParams.userCity = userCity;
           if (userState) filterParams.userState = userState;
+          if (userLocation?.latitude) filterParams.userLatitude = String(userLocation.latitude);
+          if (userLocation?.longitude) filterParams.userLongitude = String(userLocation.longitude);
           router.push({ pathname: '/advanced-filters', params: filterParams });
         }}
         onClearFilters={handleClearFilters}

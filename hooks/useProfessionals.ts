@@ -1,18 +1,25 @@
-import { useAuth } from './useAuth';
 import { useCallback, useEffect, useState } from 'react';
+import { haversineDistanceKm } from '../services/locationService';
 import { filterProfessionalsByRating, getProfessionals } from '../services/professionalService';
 import { addFavorite, getFavorites, getUserProfile, removeFavorite } from '../services/userService';
+import { useAuth } from './useAuth';
 
 interface Professional {
   id: string;
   name?: string;
   specialty?: string | string[];
+  specialties?: string[];
   city?: string;
   recommendationCount?: number;
   photoURL?: string;
   totalRatings?: number;
   averageRating?: number;
   showRating?: boolean;
+  location?: {
+    latitude: number;
+    longitude: number;
+  } | null;
+  distanceKm?: number;
 }
 
 interface ActiveFilters {
@@ -39,6 +46,7 @@ export const useProfessionals = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [userCity, setUserCity] = useState<string>('');
   const [userState, setUserState] = useState<string>('');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const PAGE_SIZE = 10;
 
   useEffect(() => {
@@ -56,6 +64,14 @@ export const useProfessionals = () => {
           if (profile?.address) {
             setUserCity(profile.address.city || '');
             setUserState(profile.address.state || '');
+          }
+          if (profile?.location?.latitude && profile?.location?.longitude) {
+            setUserLocation({
+              latitude: profile.location.latitude,
+              longitude: profile.location.longitude,
+            });
+          } else {
+            setUserLocation(null);
           }
         }
 
@@ -137,7 +153,7 @@ export const useProfessionals = () => {
     }
     if (activeFilters.specialties.length > 0) {
       data = data.filter((p) => {
-        const specs = Array.isArray(p.specialty) ? p.specialty : p.specialty ? [p.specialty] : [];
+        const specs = p.specialties || (Array.isArray(p.specialty) ? p.specialty : p.specialty ? [p.specialty] : []);
         return specs.some((s) => activeFilters.specialties.includes(s));
       });
     }
@@ -145,10 +161,35 @@ export const useProfessionals = () => {
     const normalizeCity = (city?: string) => city?.toLowerCase().trim() || '';
     const normalizedUserCity = normalizeCity(userCity);
 
-    // maxDistance === 0: show only professionals in the user's city (strict filter)
-    // maxDistance === null: show all cities, but sort same-city professionals first
+    // maxDistance === 0: only user's city
+    // maxDistance > 0: geolocation radius in km
+    // maxDistance === null: all cities with same-city priority
     if (activeFilters.maxDistance === 0 && normalizedUserCity) {
       data = data.filter((p) => normalizeCity(p.city) === normalizedUserCity);
+    } else if ((activeFilters.maxDistance || 0) > 0 && userLocation) {
+      const maxDistance = activeFilters.maxDistance as number;
+      data = data
+        .map((p) => {
+          if (!p.location?.latitude || !p.location?.longitude) {
+            return null;
+          }
+
+          const distanceKm = haversineDistanceKm(userLocation, {
+            latitude: p.location.latitude,
+            longitude: p.location.longitude,
+          });
+
+          if (distanceKm > maxDistance) {
+            return null;
+          }
+
+          return {
+            ...p,
+            distanceKm,
+          };
+        })
+        .filter((item): item is Professional => item !== null)
+        .sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0));
     } else if (normalizedUserCity && activeFilters.maxDistance === null) {
       data = [...data].sort((a, b) => {
         const aMatch = normalizeCity(a.city) === normalizedUserCity ? 0 : 1;
@@ -157,7 +198,7 @@ export const useProfessionals = () => {
       });
     }
     setFilteredProfessionals(data);
-  }, [searchQuery, activeFilters, professionals, userCity]);
+  }, [searchQuery, activeFilters, professionals, userCity, userLocation]);
 
   const clearFilters = useCallback(() => {
     setActiveFilters({ minRating: null, specialties: [], maxDistance: null });
@@ -180,7 +221,10 @@ export const useProfessionals = () => {
     loadingMore,
     userCity,
     userState,
+    userLocation,
+    setUserLocation,
   };
 };
 
-export type { Professional, ActiveFilters };
+export type { ActiveFilters, Professional };
+
